@@ -10,13 +10,15 @@
                 // Получаем значение поля ввода, которое изменилось
                 var value = event.target.value;
                 // Действие при изменении значения (можно заменить на другое действие)
-                console.log('Изменено значение поля ввода:', value);
+                console.log('Updated input field:', value);
             });
         });
     }
 
     // Вызываем функцию отслеживания изменений при загрузке страницы
     document.addEventListener('DOMContentLoaded', function() {
+        console.log('Miriads tracking script loaded. Starting tracking...', value);
+
         trackInputChanges();
     });
 })();
