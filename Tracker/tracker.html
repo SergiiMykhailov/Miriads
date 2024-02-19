@@ -1,5 +1,6 @@
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/web3@1.5.3/dist/web3.min.js"></script>
 <script>
   const firebaseConfig = {
     apiKey: "AIzaSyAN41iYxOHkvh4AgXFDXra3eA-KgGLmIwY",
@@ -19,11 +20,11 @@
   function myriads_recordBinding(wallet_id, google_analytics_user_id) {
     console.log("[MYRIADS] - Recording binding: ", wallet_id, google_analytics_user_id);
 
-    var wallet_document_ref = firestore.collection("bindings").doc(wallet_id);
-    var wallet_google_analytics_ids_collection_ref = wallet_document_ref.collection("google_analytics_identifiers");
+    var google_analytics_document_ref = firestore.collection("bindings").doc(google_analytics_user_id);
+    var wallet_google_analytics_ids_collection_ref = google_analytics_document_ref.collection("wallets");
 
     var messageData = {
-      id: google_analytics_user_id,
+      id: wallet_id,
       timestamp: firebase.firestore.FieldValue.serverTimestamp()
     };
 
@@ -45,35 +46,7 @@
   function myriads_isValueWalletAddress(value) {
     return myriads_isValueETHERC20WalletAddress(value);
   }
-    
-  function myriads_run() {
-    var google_analytics_client_identifiers = myriads_getClientGoogleAnalyticsId();
-    console.log('[MYRIADS] - Loaded user Google Analytics ID: ', google_analytics_client_identifiers);
-    
-    console.log('[MYRIADS] - Enumerating all input fields...');
-
-    var inputFields = document.querySelectorAll('input');
-    inputFields.forEach(function(input) {
-      console.log('[MYRIADS] - Found input field');
-
-      input.addEventListener('input', function(event) {
-        var value = event.target.value;
-        console.log('[MYRIADS] - Updated input field: ', value);
-        
-        var isCryptoWalletAddress = myriads_isValueWalletAddress(value);
-        if (isCryptoWalletAddress) {
-          console.log('[MYRIADS] - Crypto wallet address detected: ', value);
-          
-          google_analytics_client_identifiers.forEach(
-            function(google_analytics_client_id) {
-              myriads_recordBinding(value, google_analytics_client_id);
-            }
-          )
-        }
-      });
-    });
-  }
-    
+  
   function myriads_getClientGoogleAnalyticsId() {
     var google_analytics_identifiers = [];
     
@@ -92,9 +65,31 @@
     return google_analytics_identifiers;
   }
     
+  function myriads_run() {
+    var google_analytics_client_identifiers = myriads_getClientGoogleAnalyticsId();
+    console.log('[MYRIADS] - Loaded user Google Analytics ID: ', google_analytics_client_identifiers);
+    
+    if (window.ethereum) {
+      console.log('[MYRIADS] - MetaMask detected!');
+
+      window.ethereum.request({ method: 'eth_requestAccounts' })
+        .then(function(accounts) {
+          var wallet_address = accounts[0];
+          console.log('[MYRIADS] - Wallet address:', wallet_address);
+        
+          myriads_recordBinding(wallet_address, google_analytics_client_identifiers[0])
+        })
+        .catch(function(error) {
+          console.error('[MYRIADS] - Failed to access wallet:', error);
+        });
+      } 
+    else {
+      console.error('[MYRIADS] - MetaMask is not available');
+    }
+  }
+    
   console.log('[MYRIADS] - Tracking script loaded. Registering for DOM loaded...');
 
-  // Вызываем функцию отслеживания изменений при загрузке страницы
   document.addEventListener('DOMContentLoaded', function() {
     console.log('[MYRIADS] - Page DOM loaded. Starting tracking...');
     
