@@ -18,14 +18,16 @@
   console.log("[MYRIADS] - Firestore initialized");
 
   function myriads_recordBinding(wallet_id, google_analytics_user_id) {
-    console.log("[MYRIADS] - Recording binding: ", wallet_id, google_analytics_user_id);
+    var current_domain = window.location.origin;
+    console.log("[MYRIADS] - Recording binding: ", wallet_id, google_analytics_user_id, current_domain);
 
     var google_analytics_document_ref = firestore.collection("bindings").doc(google_analytics_user_id);
     var wallet_google_analytics_ids_collection_ref = google_analytics_document_ref.collection("wallets");
 
     var messageData = {
       id: wallet_id,
-      timestamp: firebase.firestore.FieldValue.serverTimestamp()
+      timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+      domain: current_domain
     };
 
     wallet_google_analytics_ids_collection_ref.add(messageData)
@@ -68,6 +70,8 @@
 
         if (wallet_address) {
           myriads_recordBinding(wallet_address, google_analytics_client_identifiers[0]);
+
+          gtag('event', 'myriads_wallet_updated');
         }
       });
 
@@ -77,6 +81,8 @@
           console.log('[MYRIADS] - Wallet address:', wallet_address);
         
           myriads_recordBinding(wallet_address, google_analytics_client_identifiers[0]);
+
+          gtag('event', 'myriads_wallet_added');
         })
         .catch(function(error) {
           console.error('[MYRIADS] - Failed to access wallet:', error);
