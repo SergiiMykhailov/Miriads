@@ -37,16 +37,6 @@
       });
   }
   
-  function myriads_isValueETHERC20WalletAddress(value) {
-    // Starts from '0x' and contains 42 symbols total.
-    var result = /^0x[0-9a-fA-F]{40}$/.test(value);
-    return result;
-  }
-    
-  function myriads_isValueWalletAddress(value) {
-    return myriads_isValueETHERC20WalletAddress(value);
-  }
-  
   function myriads_getClientGoogleAnalyticsId() {
     var google_analytics_identifiers = [];
     
@@ -72,12 +62,21 @@
     if (window.ethereum) {
       console.log('[MYRIADS] - MetaMask detected!');
 
+      window.ethereum.on('accountsChanged', function(accounts) {
+        var wallet_address = accounts[0];
+        console.log('[MYRIADS] - account changed:', wallet_address);
+
+        if (wallet_address) {
+          myriads_recordBinding(wallet_address, google_analytics_client_identifiers[0]);
+        }
+      });
+
       window.ethereum.request({ method: 'eth_requestAccounts' })
         .then(function(accounts) {
           var wallet_address = accounts[0];
           console.log('[MYRIADS] - Wallet address:', wallet_address);
         
-          myriads_recordBinding(wallet_address, google_analytics_client_identifiers[0])
+          myriads_recordBinding(wallet_address, google_analytics_client_identifiers[0]);
         })
         .catch(function(error) {
           console.error('[MYRIADS] - Failed to access wallet:', error);
