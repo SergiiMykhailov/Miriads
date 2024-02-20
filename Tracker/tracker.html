@@ -18,19 +18,23 @@
   console.log("[MYRIADS] - Firestore initialized");
 
   function myriads_recordBinding(wallet_id, google_analytics_user_id) {
-    var current_domain = window.location.origin;
+    var current_domain = window.location.hostname;
     console.log("[MYRIADS] - Recording binding: ", wallet_id, google_analytics_user_id, current_domain);
 
-    var google_analytics_document_ref = firestore.collection("bindings").doc(google_analytics_user_id);
-    var wallet_google_analytics_ids_collection_ref = google_analytics_document_ref.collection("wallets");
+    var bindings_collection_ref = firestore.collection("bindings");
+    var current_domain_document_ref = bindings_collection_ref.doc(current_domain);
+    var users_collection_ref = current_domain_document_ref.collection("users");
+    var current_user_document_ref = users_collection_ref.doc(google_analytics_user_id);
+    var sessions_collection_ref = current_user_document_ref.collection("sessions");
+    var current_session_id = Date.now().toString();
+    console.log("[MYRIADS] - Current session ID: ", current_session_id);
+    var current_session_document_ref = sessions_collection_ref.doc(current_session_id);
 
     var messageData = {
-      id: wallet_id,
-      timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-      domain: current_domain
+      wallet_id: wallet_id
     };
 
-    wallet_google_analytics_ids_collection_ref.add(messageData)
+    current_session_document_ref.set(messageData)
       .then(function(docRef) {
         console.log("[MYRIADS] - Binding successfully recorded");
       })
