@@ -19,14 +19,21 @@
 
   function myriads_recordBinding(wallet_id, google_analytics_user_id) {
     var current_domain = window.location.hostname;
+    
+    // We have to replace all '.' to '_' since those are used as Firestore keys
+    // and Firestore has some limitations in using '.' in keys names.
+    current_domain = current_domain.replace(/\./g, '_');
+    google_analytics_user_id = google_analytics_user_id.replace(/\./g, '_');
+    google_analytics_user_id = 'ga_' + google_analytics_user_id;
     console.log("[MYRIADS] - Recording binding: ", wallet_id, google_analytics_user_id, current_domain);
 
-    var bindings_collection_ref = firestore.collection("bindings");
+    var bindings_collection_ref = firestore.collection("domains");
     var current_domain_document_ref = bindings_collection_ref.doc(current_domain);
-    var users_collection_ref = current_domain_document_ref.collection("users");
+    var users_collection_ref = current_domain_document_ref.collection("visitors");
     var current_user_document_ref = users_collection_ref.doc(google_analytics_user_id);
     var sessions_collection_ref = current_user_document_ref.collection("sessions");
     var current_session_id = Date.now().toString();
+    current_session_id = 'timestamp_' + current_session_id;
     console.log("[MYRIADS] - Current session ID: ", current_session_id);
     var current_session_document_ref = sessions_collection_ref.doc(current_session_id);
 
