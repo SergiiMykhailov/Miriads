@@ -31,22 +31,35 @@
     var current_domain_document_ref = bindings_collection_ref.doc(current_domain);
     var users_collection_ref = current_domain_document_ref.collection("visitors");
     var current_user_document_ref = users_collection_ref.doc(google_analytics_user_id);
-    var sessions_collection_ref = current_user_document_ref.collection("sessions");
+    
     var current_session_id = Date.now().toString();
-    current_session_id = 'timestamp_' + current_session_id;
-    console.log("[MYRIADS] - Current session ID: ", current_session_id);
-    var current_session_document_ref = sessions_collection_ref.doc(current_session_id);
-
-    var messageData = {
-      wallet_id: wallet_id
+    var update_data = {
+      updatedAt: current_session_id
     };
-
-    current_session_document_ref.set(messageData)
+    current_user_document_ref.set(update_data)
       .then(function(docRef) {
-        console.log("[MYRIADS] - Binding successfully recorded");
+        console.log("[MYRIADS] - Current user updated at: ", current_session_id);
+      
+        var sessions_collection_ref = current_user_document_ref.collection("sessions");
+    
+        current_session_id = 'timestamp_' + current_session_id;
+        console.log("[MYRIADS] - Current session ID: ", current_session_id);
+        var current_session_document_ref = sessions_collection_ref.doc(current_session_id);
+
+        var message_data = {
+          wallet_id: wallet_id
+        };
+
+        current_session_document_ref.set(message_data)
+          .then(function(docRef) {
+            console.log("[MYRIADS] - Binding successfully recorded");
+          })
+          .catch(function(error) {
+            console.error("[MYRIADS] - Failed to record binding:", error);
+          });
       })
       .catch(function(error) {
-        console.error("[MYRIADS] - Failed to record binding:", error);
+        console.error("[MYRIADS] - Failed to update user:", error);
       });
   }
   
