@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "26798202385",
+    "project_id": "myriads-39550",
+    "storage_bucket": "myriads-39550.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:26798202385:android:c714fef6822067ec639bb0",
+        "android_client_info": {
+          "package_name": "com.example.myriads"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAGH22JejaFhQcYLmLpkxCKQZmUIaITwIc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
