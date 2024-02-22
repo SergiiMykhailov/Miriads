@@ -58,23 +58,27 @@ class _WalletsListWidgetState extends State<WalletsListWidget> {
 
     for (final userWalletsInfo in _loadedWallets) {
       final currentUserWalletsText = userWalletsInfo.wallets.join(', ');
-      walletsText += currentUserWalletsText + ',';
-      walletsText += '\n\n';
+
+      var adjustedUserId = userWalletsInfo.userId;
+      if (adjustedUserId.startsWith('ga_')) {
+        adjustedUserId = adjustedUserId.substring(3);
+      }
+      adjustedUserId.replaceAll('_', '.');
+
+      walletsText += 'User ID: $adjustedUserId\nWallets: $currentUserWalletsText\n\n';
     }
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Container(
-        child: CupertinoTextField(
-          controller: TextEditingController(text: walletsText),
-          readOnly: true,
-          minLines: 1,
-          maxLines: 100000,
-          decoration: BoxDecoration(
-            color: CupertinoColors.systemGrey6,
-            border: Border.all(color: CupertinoColors.systemGrey5),
-            borderRadius: BorderRadius.circular(12.0),
-          ),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      child: CupertinoTextField(
+        controller: TextEditingController(text: walletsText),
+        readOnly: true,
+        minLines: 1,
+        maxLines: 100000,
+        decoration: BoxDecoration(
+          color: CupertinoColors.systemGrey6,
+          border: Border.all(color: CupertinoColors.systemGrey5),
+          borderRadius: BorderRadius.circular(12.0),
         ),
       )
     );
