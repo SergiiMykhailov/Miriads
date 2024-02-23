@@ -63,9 +63,9 @@ class _WalletsListWidgetState extends State<WalletsListWidget> {
       if (adjustedUserId.startsWith('ga_')) {
         adjustedUserId = adjustedUserId.substring(3);
       }
-      adjustedUserId.replaceAll('_', '.');
+      adjustedUserId = adjustedUserId.replaceAll('_', '.');
 
-      walletsText += 'User ID: $adjustedUserId\nWallets: $currentUserWalletsText\n\n';
+      walletsText += '$adjustedUserId, $currentUserWalletsText\n';
     }
 
     return Padding(
