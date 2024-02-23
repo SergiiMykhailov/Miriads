@@ -1,0 +1,5 @@
+apps/myriads/.firebase
+apps/myriads/node_modules
+cloud/firestore_functions/.idea
+cloud/firestore_functions/functions/__pycache__
+cloud/firestore_functions/functions/venv

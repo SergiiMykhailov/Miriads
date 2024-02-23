@@ -1,22 +1,5 @@
-<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/web3@1.5.3/dist/web3.min.js"></script>
 <script>
-  const firebaseConfig = {
-    apiKey: "AIzaSyAN41iYxOHkvh4AgXFDXra3eA-KgGLmIwY",
-    authDomain: "myriads-39550.firebaseapp.com",
-    projectId: "myriads-39550",
-    storageBucket: "myriads-39550.appspot.com",
-    messagingSenderId: "26798202385",
-    appId: "1:26798202385:web:222f46c8fc57dc95639bb0"
-  };
-
-  // Initialize Firebase
-  const app = firebase.initializeApp(firebaseConfig);
-  const firestore = firebase.firestore();
-  
-  console.log("[MYRIADS] - Firestore initialized");
-
   function myriads_recordBinding(wallet_id, google_analytics_user_id) {
     var current_domain = window.location.hostname;
     
@@ -26,41 +9,20 @@
     google_analytics_user_id = google_analytics_user_id.replace(/\./g, '_');
     google_analytics_user_id = 'ga_' + google_analytics_user_id;
     console.log("[MYRIADS] - Recording binding: ", wallet_id, google_analytics_user_id, current_domain);
-
-    var bindings_collection_ref = firestore.collection("domains");
-    var current_domain_document_ref = bindings_collection_ref.doc(current_domain);
-    var users_collection_ref = current_domain_document_ref.collection("visitors");
-    var current_user_document_ref = users_collection_ref.doc(google_analytics_user_id);
     
     var current_session_id = Date.now().toString();
-    var update_data = {
-      updatedAt: current_session_id
-    };
-    current_user_document_ref.set(update_data)
-      .then(function(docRef) {
-        console.log("[MYRIADS] - Current user updated at: ", current_session_id);
-      
-        var sessions_collection_ref = current_user_document_ref.collection("sessions");
-    
-        current_session_id = 'timestamp_' + current_session_id;
-        console.log("[MYRIADS] - Current session ID: ", current_session_id);
-        var current_session_document_ref = sessions_collection_ref.doc(current_session_id);
 
-        var message_data = {
-          wallet_id: wallet_id
-        };
+    var request = 'https://record-entry-rj6vsu5rhq-uc.a.run.app?' 
+      + 'user_id=' + google_analytics_user_id 
+      + '&wallet_id=' + wallet_id 
+      + '&domain=' + current_domain 
+      + '&session_id=timestamp_' + current_session_id;
+    console.log("[MYRIADS] - Executing request: ", request);
 
-        current_session_document_ref.set(message_data)
-          .then(function(docRef) {
-            console.log("[MYRIADS] - Binding successfully recorded");
-          })
-          .catch(function(error) {
-            console.error("[MYRIADS] - Failed to record binding:", error);
-          });
-      })
-      .catch(function(error) {
-        console.error("[MYRIADS] - Failed to update user:", error);
-      });
+    fetch(request, {
+      method: 'GET',
+      mode: 'no-cors'
+    })
   }
   
   function myriads_getClientGoogleAnalyticsId() {
