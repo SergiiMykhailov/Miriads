@@ -1,5 +1,4 @@
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
 import 'package:myriads/firestore/firestore_client.dart';
 import 'package:myriads/models/user_wallets_info.dart';
 
@@ -17,6 +16,7 @@ class WalletsListWidget extends StatefulWidget {
 
   @override
   State<StatefulWidget> createState() {
+    // ignore: no_logic_in_create_state
     return _state;
   }
 

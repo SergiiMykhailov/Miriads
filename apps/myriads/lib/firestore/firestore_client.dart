@@ -1,10 +1,10 @@
+import 'package:myriads/models/user_wallets_info.dart';
+import 'package:myriads/models/user_info.dart';
 import 'package:myriads/firestore/parsing_utils.dart';
 import 'package:myriads/utils/string_extensions.dart';
 
 import 'firestore_keys.dart';
 import 'firestore_utils.dart';
-
-import 'package:myriads/models/user_wallets_info.dart';
 
 class FirestoreClient {
 
@@ -33,9 +33,9 @@ class FirestoreClient {
       for (final sessionDocument in sessionsSnapshot.docs) {
         final sessionData = sessionDocument.data();
 
-        final wallet_id = tryGetValueFromMap<String>(sessionData, FirestoreKeys.walletId);
-        if (wallet_id != null && !wallets.contains(wallet_id)) {
-          wallets.insert(0, wallet_id);
+        final walletId = tryGetValueFromMap<String>(sessionData, FirestoreKeys.walletId);
+        if (walletId != null && !wallets.contains(walletId)) {
+          wallets.insert(0, walletId);
         }
       }
 
@@ -47,6 +47,22 @@ class FirestoreClient {
     return result;
   }
 
+  static Future<UserInfo?> loadUserInfo(String userEmail) async {
+    final firestore = await FirestoreUtils.initializedSharedInstance();
+    final userDocument = await firestore
+      .collection(FirestoreKeys.users)
+      .doc(userEmail)
+      .get();
+
+    final userDocumentData = userDocument.data();
+    if (userDocumentData != null) {
+      final userInfo = _userInfoFromUserDocumentData(userDocumentData, userEmail);
+      return userInfo;
+    }
+
+    return null;
+  }
+
   // Internal methods
 
   static String _adjustDomain(String domain) {
@@ -56,5 +72,17 @@ class FirestoreClient {
     adjustedDomain = adjustedDomain.replaceAll('.', '_');
 
     return adjustedDomain;
+  }
+
+  static UserInfo? _userInfoFromUserDocumentData(
+    Map<String, dynamic> userDocumentData,
+    String userEmail
+  ) {
+    final domain = tryGetValueFromMap<String>(userDocumentData, FirestoreKeys.domain);
+    if (domain != null) {
+      return UserInfo(email: userEmail, domain: domain);
+    }
+
+    return null;
   }
 }
