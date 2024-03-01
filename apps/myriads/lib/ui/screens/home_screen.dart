@@ -1,6 +1,8 @@
 import 'package:flutter/cupertino.dart';
 import 'package:myriads/firestore/firestore_client.dart';
+import 'package:myriads/ui/widgets/getting_started_widget.dart';
 import 'package:myriads/ui/widgets/wallets_list_widget.dart';
+import 'package:myriads/utils/widget_extensions.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({
@@ -20,6 +22,8 @@ class HomeScreen extends StatefulWidget {
   final String _userEmail;
 }
 
+enum _HomeScreenSelectedTab { gettingStarted, statistics }
+
 class _HomeScreenState extends State<HomeScreen> {
 
   // Public methods and properties
@@ -35,22 +39,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    Widget contentLayer = Column(
-      children: [
-        SizedBox(
-          height: 100,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Text('Domain: ${_domain != null ? _domain! : ''}'),
-            ],
-          ),
-        ),
-        Container(height: 1, color: CupertinoColors.systemGrey5),
-        _walletsListWidget
-      ],
-    );
+    final contentLayer = _buildContentLayer(context);
 
     List<Widget> layers = [contentLayer];
     if (_isLoading) {
@@ -76,12 +65,71 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  Widget _buildContentLayer(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          flex: 1,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 44, horizontal: 20),
+            child: Column(
+              children: [
+                CupertinoButton(
+                  child: const Text('Getting started'),
+                  onPressed: () {
+                    _activateTab(_HomeScreenSelectedTab.gettingStarted);
+                  }
+                ),
+                CupertinoButton(
+                  child: const Text('Statistics'),
+                  onPressed: () {
+                    _activateTab(_HomeScreenSelectedTab.statistics);
+                  }
+                )
+              ]
+            )
+          ) ,
+        ),
+        Expanded(
+          flex: 3,
+          child: Column(
+            children: [
+              SizedBox(
+                height: 100,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Text('Domain: ${_domain != null ? _domain! : ''}'),
+                  ],
+                ),
+              ),
+              Container(height: 1, color: CupertinoColors.systemGrey5),
+              Stack(
+                children: [
+                  Visibility(
+                    visible: _selectedTab == _HomeScreenSelectedTab.gettingStarted,
+                    child: _gettingStartedWidget
+                  ),
+                  Visibility(
+                    visible: _selectedTab == _HomeScreenSelectedTab.statistics,
+                    child: _walletsListWidget
+                  )
+                ],
+              )
+            ],
+          ),
+        )
+      ]
+    );
+  }
+
   // Internal methods
 
   void _reload() async {
     final userInfo = await FirestoreClient.loadUserInfo(_userEmail);
 
-    setState(() {
+    updateState(() {
       _isLoading = false;
       _domain = userInfo?.domain;
 
@@ -91,10 +139,18 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
+  void _activateTab(_HomeScreenSelectedTab tab) {
+    updateState(() {
+      _selectedTab = tab;
+    });
+  }
+
   // Internal fields
 
   final _walletsListWidget = WalletsListWidget();
+  final _gettingStartedWidget = const GettingStartedWidget();
   final String _userEmail;
   bool _isLoading = true;
   String? _domain;
+  _HomeScreenSelectedTab _selectedTab = _HomeScreenSelectedTab.gettingStarted;
 }
