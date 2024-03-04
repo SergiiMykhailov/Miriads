@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:myriads/firestore/firestore_client.dart';
 import 'package:myriads/models/user_wallets_info.dart';
+import 'package:myriads/ui/widgets/copyable_text_widget.dart';
 import 'package:myriads/utils/widget_extensions.dart';
 
 // ignore: must_be_immutable
@@ -84,20 +85,7 @@ class _WalletsListWidgetState extends State<WalletsListWidget> {
       walletsText += '$adjustedUserId, $currentUserWalletsText\n';
     }
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-      child: CupertinoTextField(
-        controller: TextEditingController(text: walletsText),
-        readOnly: true,
-        minLines: 1,
-        maxLines: 100000,
-        decoration: BoxDecoration(
-          color: CupertinoColors.systemGrey6,
-          border: Border.all(color: CupertinoColors.systemGrey5),
-          borderRadius: BorderRadius.circular(12.0),
-        ),
-      )
-    );
+    return CopyableTextWidget(title: '', text: walletsText);
   }
 
   void _reloadWallets() async {

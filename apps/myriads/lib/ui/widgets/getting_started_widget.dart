@@ -1,3 +1,8 @@
+import 'package:myriads/ui/widgets/error_message_widget.dart';
+import 'package:myriads/ui/widgets/copyable_text_widget.dart';
+import 'package:myriads/utils/widget_extensions.dart';
+
+import 'package:http/http.dart' as http;
 import 'package:flutter/cupertino.dart';
 
 class GettingStartedWidget extends StatefulWidget {
@@ -15,6 +20,12 @@ class GettingStartedWidget extends StatefulWidget {
 
 class _GettingStartedWidgetState extends State<GettingStartedWidget> {
 
+  // Public methods and properties
+
+  _GettingStartedWidgetState() {
+    _reloadContent();
+  }
+
   // Overridden methods
 
   @override
@@ -26,17 +37,53 @@ class _GettingStartedWidgetState extends State<GettingStartedWidget> {
         const CupertinoActivityIndicator()
       );
     }
+    else if (_content == null) {
+      layers.add(
+        const ErrorMessageWidget(
+          title: 'Failed to load setup instructions',
+          message: 'Content not found'
+        )
+      );
+    }
+    else {
+      layers.add(
+        CopyableTextWidget(
+          title: 'Copy-paste code below to your HTML page',
+          text: _content!
+        )
+      );
+    }
 
     return Container(
-      color: CupertinoColors.systemYellow,
+      color: CupertinoColors.white,
       child: Stack(children: layers),
     );
   }
 
   // Internal methods
 
+  void _reloadContent() async {
+    updateState( () async {
+      _isLoading = true;
+      _content = null;
+
+      final response = await http.get(Uri.parse(_Constants.contentUrl));
+      updateState(() {
+        _content = response.statusCode == 200 ? response.body : null;
+        _isLoading = false;
+      });
+    });
+  }
+
   // Internal fields
 
   bool _isLoading = true;
+  String? _content;
+
+}
+
+class _Constants {
+
+  static const contentUrl = 'https://raw.githubusercontent.com/SergiiMykhailov/Myriads/master/Tracker/tracker.html';
 
 }

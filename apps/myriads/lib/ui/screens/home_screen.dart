@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:myriads/firestore/firestore_client.dart';
+import 'package:myriads/ui/widgets/error_message_widget.dart';
 import 'package:myriads/ui/widgets/getting_started_widget.dart';
 import 'package:myriads/ui/widgets/wallets_list_widget.dart';
 import 'package:myriads/utils/widget_extensions.dart';
@@ -52,9 +53,9 @@ class _HomeScreenState extends State<HomeScreen> {
     }
     else if (_domain == null) {
       layers.add(
-        Container(
-          color: CupertinoColors.white,
-          child: Center(child: Text('No domain found for user with email: $_userEmail')),
+        ErrorMessageWidget(
+          title: 'Login failure',
+          message: 'User with email \'$_userEmail\' exists\nbut there is no associated domain'
         )
       );
     }
@@ -105,17 +106,21 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
               Container(height: 1, color: CupertinoColors.systemGrey5),
-              Stack(
-                children: [
-                  Visibility(
-                    visible: _selectedTab == _HomeScreenSelectedTab.gettingStarted,
-                    child: _gettingStartedWidget
-                  ),
-                  Visibility(
-                    visible: _selectedTab == _HomeScreenSelectedTab.statistics,
-                    child: _walletsListWidget
+              Expanded(
+                child: SingleChildScrollView(
+                  child: Stack(
+                    children: [
+                      Visibility(
+                        visible: _selectedTab == _HomeScreenSelectedTab.gettingStarted,
+                        child: _gettingStartedWidget
+                      ),
+                      Visibility(
+                        visible: _selectedTab == _HomeScreenSelectedTab.statistics,
+                        child: _walletsListWidget
+                      )
+                    ],
                   )
-                ],
+                )
               )
             ],
           ),
