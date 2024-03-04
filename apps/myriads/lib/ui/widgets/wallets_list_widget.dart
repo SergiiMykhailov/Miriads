@@ -1,7 +1,10 @@
 import 'package:flutter/cupertino.dart';
 import 'package:myriads/firestore/firestore_client.dart';
 import 'package:myriads/models/user_wallets_info.dart';
+import 'package:myriads/ui/widgets/copyable_text_widget.dart';
+import 'package:myriads/utils/widget_extensions.dart';
 
+// ignore: must_be_immutable
 class WalletsListWidget extends StatefulWidget {
 
   // Public methods and properties
@@ -9,29 +12,43 @@ class WalletsListWidget extends StatefulWidget {
   WalletsListWidget({super.key});
 
   void reload(String domain) {
-    _state.reload(domain);
+    _domain = domain;
+
+    if (_state != null) {
+      _state!.reload(domain);
+    }
   }
 
   // Overridden methods
 
   @override
+  // ignore: no_logic_in_create_state
   State<StatefulWidget> createState() {
-    // ignore: no_logic_in_create_state
-    return _state;
+    _state = _WalletsListWidgetState(domain: _domain);
+    return _state!;
   }
 
   // Internal fields
 
-  final _state = _WalletsListWidgetState();
-
+  _WalletsListWidgetState? _state;
+  String _domain = '';
 }
 
 class _WalletsListWidgetState extends State<WalletsListWidget> {
 
   // Public methods and properties
 
+  _WalletsListWidgetState({
+    required String domain
+  })
+    : _domain = domain {
+    if (_domain != null && _domain!.isNotEmpty) {
+      reload(_domain!);
+    }
+  }
+
   void reload(String domain) {
-    setState(() {
+    updateState(() {
       _domain = domain;
       _isLoading = true;
       _loadedWallets = [];
@@ -45,7 +62,7 @@ class _WalletsListWidgetState extends State<WalletsListWidget> {
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return const CupertinoActivityIndicator();
+      return const Center(child: CupertinoActivityIndicator());
     }
 
     return _buildWalletsList();
@@ -68,20 +85,7 @@ class _WalletsListWidgetState extends State<WalletsListWidget> {
       walletsText += '$adjustedUserId, $currentUserWalletsText\n';
     }
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-      child: CupertinoTextField(
-        controller: TextEditingController(text: walletsText),
-        readOnly: true,
-        minLines: 1,
-        maxLines: 100000,
-        decoration: BoxDecoration(
-          color: CupertinoColors.systemGrey6,
-          border: Border.all(color: CupertinoColors.systemGrey5),
-          borderRadius: BorderRadius.circular(12.0),
-        ),
-      )
-    );
+    return CopyableTextWidget(title: '', text: walletsText);
   }
 
   void _reloadWallets() async {
@@ -91,7 +95,7 @@ class _WalletsListWidgetState extends State<WalletsListWidget> {
 
     final loadedWallets = await FirestoreClient.loadAllUsersWallets(_domain!);
 
-    setState(() {
+    updateState(() {
       _isLoading = false;
       _loadedWallets = loadedWallets;
     });
