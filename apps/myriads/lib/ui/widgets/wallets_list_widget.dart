@@ -1,8 +1,10 @@
-import 'package:flutter/cupertino.dart';
 import 'package:myriads/firestore/firestore_client.dart';
 import 'package:myriads/models/user_wallets_info.dart';
+import 'package:myriads/ui/theme/app_theme.dart';
 import 'package:myriads/ui/widgets/copyable_text_widget.dart';
 import 'package:myriads/utils/widget_extensions.dart';
+
+import 'package:flutter/cupertino.dart';
 
 // ignore: must_be_immutable
 class WalletsListWidget extends StatefulWidget {
@@ -62,7 +64,7 @@ class _WalletsListWidgetState extends State<WalletsListWidget> {
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return const Center(child: CupertinoActivityIndicator());
+      return const Center(child: CupertinoActivityIndicator(color: AppTheme.textColorBody));
     }
 
     return _buildWalletsList();
