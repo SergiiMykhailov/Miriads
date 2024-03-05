@@ -1,3 +1,4 @@
+import 'package:myriads/ui/theme/app_theme.dart';
 import 'package:myriads/utils/widget_extensions.dart';
 
 import 'package:flutter/services.dart';
@@ -47,11 +48,26 @@ class _CopyableWidgetState extends State<CopyableTextWidget> {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Text(_title),
+              Text(
+                _title,
+                style: const TextStyle(
+                  color: AppTheme.textColorBody,
+                  fontSize: 16
+                )
+              ),
               Expanded(child: Container()),
-              Text(_isContentCopied ? 'Copied' : 'Copy all'),
+              Text(
+                _isContentCopied ? 'Copied' : 'Copy all',
+                style: const TextStyle(
+                  color: AppTheme.textColorBody,
+                  fontSize: 16
+                )
+              ),
               CupertinoButton(
-                child: const Icon(Icons.copy_all),
+                child: const Icon(
+                  Icons.copy_all,
+                  color: AppTheme.textColorBody,
+                ),
                 onPressed: () {
                   _copyContentToClipboard();
                 }
@@ -64,8 +80,7 @@ class _CopyableWidgetState extends State<CopyableTextWidget> {
           child: Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: CupertinoColors.systemGrey6,
-              border: Border.all(color: CupertinoColors.systemGrey5),
+              color: AppTheme.secondaryBackgroundColor,
               borderRadius: BorderRadius.circular(16.0),
             ),
             child: CupertinoTextField(
@@ -74,8 +89,12 @@ class _CopyableWidgetState extends State<CopyableTextWidget> {
               minLines: 1,
               maxLines: 100000,
               decoration: const BoxDecoration(
-                color: CupertinoColors.systemGrey6
-              )
+                color: null
+              ),
+              style: const TextStyle(
+                color: AppTheme.textColorBody,
+                fontSize: 12
+              ),
             ),
           )
         )

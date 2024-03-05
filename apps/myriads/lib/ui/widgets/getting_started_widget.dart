@@ -1,3 +1,4 @@
+import 'package:myriads/ui/theme/app_theme.dart';
 import 'package:myriads/ui/widgets/error_message_widget.dart';
 import 'package:myriads/ui/widgets/copyable_text_widget.dart';
 import 'package:myriads/utils/widget_extensions.dart';
@@ -34,7 +35,7 @@ class _GettingStartedWidgetState extends State<GettingStartedWidget> {
 
     if (_isLoading) {
       layers.add(
-        const CupertinoActivityIndicator()
+        const CupertinoActivityIndicator(color: AppTheme.textColorBody)
       );
     }
     else if (_content == null) {
@@ -54,10 +55,7 @@ class _GettingStartedWidgetState extends State<GettingStartedWidget> {
       );
     }
 
-    return Container(
-      color: CupertinoColors.white,
-      child: Stack(children: layers),
-    );
+    return Stack(children: layers);
   }
 
   // Internal methods

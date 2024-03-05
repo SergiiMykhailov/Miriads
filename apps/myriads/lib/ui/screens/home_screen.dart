@@ -1,10 +1,11 @@
-import 'package:flutter/cupertino.dart';
-import 'package:myriads/firestore/firestore_client.dart';
 import 'package:myriads/ui/theme/app_theme.dart';
 import 'package:myriads/ui/widgets/error_message_widget.dart';
 import 'package:myriads/ui/widgets/getting_started_widget.dart';
 import 'package:myriads/ui/widgets/wallets_list_widget.dart';
 import 'package:myriads/utils/widget_extensions.dart';
+
+import 'package:flutter/cupertino.dart';
+import 'package:myriads/firestore/firestore_client.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({
@@ -47,8 +48,8 @@ class _HomeScreenState extends State<HomeScreen> {
     if (_isLoading) {
       layers.add(
         Container(
-          color: CupertinoColors.white,
-          child: const CupertinoActivityIndicator(),
+          color: AppTheme.backgroundColor,
+          child: const CupertinoActivityIndicator(color: AppTheme.textColorBody),
         )
       );
     }
@@ -61,10 +62,7 @@ class _HomeScreenState extends State<HomeScreen> {
       );
     }
 
-    return Container(
-      color: CupertinoColors.white,
-      child: Stack(children: layers),
-    );
+    return Stack(children: layers);
   }
 
   Widget _buildContentLayer(BuildContext context) {
@@ -80,7 +78,10 @@ class _HomeScreenState extends State<HomeScreen> {
                 mainAxisAlignment: MainAxisAlignment.start,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Image.asset('lib/resources/images/logo_dark.jpg'),
+                  SizedBox(
+                    height: 130,
+                    child: Image.asset('lib/resources/images/logo_dark.jpg'),
+                  ),
                   const SizedBox(height: 16),
                   Container(
                     height: 1,
@@ -112,35 +113,10 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
         Expanded(
           flex: 5,
-          child: Column(
+          child: Stack(
             children: [
-              SizedBox(
-                height: 100,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Text('Domain: ${_domain != null ? _domain! : ''}'),
-                  ],
-                ),
-              ),
-              Container(height: 1, color: CupertinoColors.systemGrey5),
-              Expanded(
-                child: SingleChildScrollView(
-                  child: Stack(
-                    children: [
-                      Visibility(
-                        visible: _selectedTab == _HomeScreenSelectedTab.gettingStarted,
-                        child: _gettingStartedWidget
-                      ),
-                      Visibility(
-                        visible: _selectedTab == _HomeScreenSelectedTab.statistics,
-                        child: _walletsListWidget
-                      )
-                    ],
-                  )
-                )
-              )
+              _makeContentPanelBackground(),
+              _makeContentPanels()
             ],
           ),
         )
@@ -149,6 +125,62 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   // Internal methods
+
+  Widget _makeContentPanelBackground() {
+    return Column(
+      children: [
+        SizedBox(
+          height: 130,
+          child: Image.asset(
+            'lib/resources/images/content_header_gradient.jpg',
+            fit: BoxFit.fill,
+          ),
+        ),
+        Expanded(
+          child: Container(
+            color: AppTheme.backgroundColor,
+          )
+        )
+      ],
+    );
+  }
+
+  Widget _makeContentPanel({
+    required Widget panelWidget,
+    required bool isVisible
+  }) {
+    return Visibility(
+      visible: isVisible,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 30),
+        child: Container(
+          decoration: BoxDecoration(
+            color: AppTheme.backgroundColor.withOpacity(0.7),
+            borderRadius: BorderRadius.circular(16.0),
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 20),
+          child: panelWidget,
+        ),
+      )
+    );
+  }
+
+  Widget _makeContentPanels() {
+    return SingleChildScrollView(
+      child: Stack(
+        children: [
+          _makeContentPanel(
+            panelWidget: _gettingStartedWidget,
+            isVisible: _selectedTab == _HomeScreenSelectedTab.gettingStarted
+          ),
+          _makeContentPanel(
+            panelWidget: _walletsListWidget,
+            isVisible: _selectedTab == _HomeScreenSelectedTab.statistics
+          )
+        ],
+      )
+    );
+  }
 
   Widget _makeButton({
     required String title,
@@ -162,7 +194,7 @@ class _HomeScreenState extends State<HomeScreen> {
         Expanded(
           child: Container(
             decoration: BoxDecoration(
-              color: isHighlighted ? AppTheme.buttonHighlightColor : null,
+              color: isHighlighted ? AppTheme.secondaryBackgroundColor : null,
               borderRadius: BorderRadius.circular(12.0),
             ),
             child: CupertinoButton(
