@@ -47,7 +47,7 @@ class MyriadsApp extends StatelessWidget {
                   clientId: "26798202385-ge52o1qjr6g2mm0dmdgc7hrrp2e1da8c.apps.googleusercontent.com")
               ],
               subtitleBuilder: (context, action) {
-                return Image.asset('lib/resources/images/logo_black.jpg');
+                return Image.asset('lib/resources/images/logo_light.jpg');
               },
             );
           }

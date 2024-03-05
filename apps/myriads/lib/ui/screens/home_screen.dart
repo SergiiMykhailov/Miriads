@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:myriads/firestore/firestore_client.dart';
+import 'package:myriads/ui/theme/app_theme.dart';
 import 'package:myriads/ui/widgets/error_message_widget.dart';
 import 'package:myriads/ui/widgets/getting_started_widget.dart';
 import 'package:myriads/ui/widgets/wallets_list_widget.dart';
@@ -71,28 +72,46 @@ class _HomeScreenState extends State<HomeScreen> {
       children: [
         Expanded(
           flex: 1,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 44, horizontal: 20),
-            child: Column(
-              children: [
-                CupertinoButton(
-                  child: const Text('Getting started'),
-                  onPressed: () {
-                    _activateTab(_HomeScreenSelectedTab.gettingStarted);
-                  }
-                ),
-                CupertinoButton(
-                  child: const Text('Statistics'),
-                  onPressed: () {
-                    _activateTab(_HomeScreenSelectedTab.statistics);
-                  }
-                )
-              ]
-            )
+          child: Container(
+            color: AppTheme.backgroundColor,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Image.asset('lib/resources/images/logo_dark.jpg'),
+                  const SizedBox(height: 16),
+                  Container(
+                    height: 1,
+                    color: AppTheme.separatorColor,
+                  ),
+                  const SizedBox(height: 16),
+                  _makeButton(
+                    title: 'Getting started',
+                    isHighlighted: _selectedTab == _HomeScreenSelectedTab.gettingStarted,
+                    onPressed: () {
+                      _activateTab(_HomeScreenSelectedTab.gettingStarted);
+                    }
+                  ),
+                  _makeButton(
+                    title: 'Statistics',
+                    isHighlighted: _selectedTab == _HomeScreenSelectedTab.statistics,
+                    onPressed: () {
+                      _activateTab(_HomeScreenSelectedTab.statistics);
+                    }
+                  )
+                ]
+              )
+            ),
           ) ,
         ),
+        Container(
+          width: 1,
+          color: AppTheme.separatorColor,
+        ),
         Expanded(
-          flex: 3,
+          flex: 5,
           child: Column(
             children: [
               SizedBox(
@@ -130,6 +149,43 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   // Internal methods
+
+  Widget _makeButton({
+    required String title,
+    required bool isHighlighted,
+    required VoidCallback onPressed
+  }) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          child: Container(
+            decoration: BoxDecoration(
+              color: isHighlighted ? AppTheme.buttonHighlightColor : null,
+              borderRadius: BorderRadius.circular(12.0),
+            ),
+            child: CupertinoButton(
+              onPressed: onPressed,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    textAlign: TextAlign.start,
+                    style: const TextStyle(
+                      color: AppTheme.textColorBody,
+                      fontSize: 14
+                    ),
+                  )
+                ],
+              )
+            ),
+          )
+        )
+      ],
+    );
+  }
 
   void _reload() async {
     final userInfo = await FirestoreClient.loadUserInfo(_userEmail);
