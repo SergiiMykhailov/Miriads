@@ -1,11 +1,11 @@
-import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 import 'package:myriads/ui/theme/app_theme.dart';
 import 'package:myriads/ui/widgets/segments/create_segment_widget.dart';
 import 'package:myriads/ui/widgets/segments/segment_details_widget.dart';
 import 'package:myriads/ui/widgets/segments/segments_list_widget.dart';
 import 'package:myriads/utils/widget_extensions.dart';
+
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 
 // ignore: must_be_immutable
 class SegmentsWidget extends StatefulWidget {
