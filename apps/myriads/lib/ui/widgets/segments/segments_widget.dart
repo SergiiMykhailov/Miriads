@@ -82,7 +82,7 @@ class _SegmentsWidgetState extends State<SegmentsWidget> {
           )
         ),
         Padding(
-          padding: const EdgeInsets.only(right: 24, bottom: 24),
+          padding: const EdgeInsets.only(right: 24, bottom: 24, top: 24),
           child: Container(
             decoration: BoxDecoration(
               color: AppTheme.secondaryBackgroundColor,
