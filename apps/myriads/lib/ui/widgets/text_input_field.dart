@@ -12,6 +12,8 @@ class TextInputField extends StatelessWidget {
     : _placeholder = placeholder
     , super(key: key);
 
+  String get text => _controller.text;
+
   // Overridden methods
 
   @override

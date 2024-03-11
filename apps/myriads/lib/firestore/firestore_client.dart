@@ -63,6 +63,48 @@ class FirestoreClient {
     return null;
   }
 
+  static Future<void> registerSegment({
+    required String domain,
+    required String title,
+    required String description,
+    int? minWalletAgeInDays,
+    int? maxWalletAgeInDays,
+    int? transactionsCountPeriodInDays,
+    int? minTransactionsCountPerPeriod,
+    int? maxTransactionsCountPerPeriod
+  }) async {
+    final adjustedDomain = _adjustDomain(domain);
+    final segmentId = DateTime.now().millisecondsSinceEpoch.toString();
+
+    final firestore = await FirestoreUtils.initializedSharedInstance();
+    final segmentDocument = firestore
+      .collection(FirestoreKeys.domains)
+      .doc(adjustedDomain)
+      .collection(FirestoreKeys.segments)
+      .doc(segmentId);
+
+    Map<String, dynamic> data = {
+      FirestoreKeys.title : title,
+      FirestoreKeys.description : description
+    };
+
+    validateParameterAndAddToData(int? parameter, String parameterName) {
+      if (parameter != null) {
+        data.addAll({ parameterName : parameter });
+      }
+    }
+
+    validateParameterAndAddToData(minWalletAgeInDays, FirestoreKeys.minWalletAgeInDays);
+    validateParameterAndAddToData(maxWalletAgeInDays, FirestoreKeys.maxWalletAgeInDays);
+    validateParameterAndAddToData(transactionsCountPeriodInDays, FirestoreKeys.transactionsCountPeriodInDays);
+    validateParameterAndAddToData(minTransactionsCountPerPeriod, FirestoreKeys.minTransactionsCountPerPeriod);
+    validateParameterAndAddToData(maxTransactionsCountPerPeriod, FirestoreKeys.maxTransactionsCountPerPeriod);
+
+    await segmentDocument.set(data);
+
+    await Future.delayed(const Duration(seconds: 3));
+  }
+
   // Internal methods
 
   static String _adjustDomain(String domain) {

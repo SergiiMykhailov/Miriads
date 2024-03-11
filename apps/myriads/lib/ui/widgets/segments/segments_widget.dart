@@ -70,14 +70,7 @@ class _SegmentsWidgetState extends State<SegmentsWidget> {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Container(
-                padding: const EdgeInsets.only(right: 10),
-                decoration: BoxDecoration(
-                  color: AppTheme.accentColor,
-                  borderRadius: BorderRadius.circular(12.0),
-                ),
-                child: _makeActionButton(),
-              )
+              _makeActionButton()
             ],
           )
         ),
@@ -104,28 +97,41 @@ class _SegmentsWidgetState extends State<SegmentsWidget> {
     final title = _viewState == _SegmentsWidgetViewState.displayingSegmentsList
       ? 'Create segment'
       : 'To list';
+    final decoration = _viewState == _SegmentsWidgetViewState.displayingSegmentsList
+      ? BoxDecoration(
+          color: AppTheme.accentColor,
+          borderRadius: BorderRadius.circular(12.0),
+        )
+      : null;
+    final textColor = _viewState == _SegmentsWidgetViewState.displayingSegmentsList
+      ? CupertinoColors.black
+      : AppTheme.accentColor;
 
-    return CupertinoButton(
-      onPressed: _handleActionButtonPressed,
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.start,
-        children: [
-          Icon(
-            iconData,
-            color: CupertinoColors.black,
-          ),
-          const SizedBox(width: 8),
-          Text(
-            title,
-            textAlign: TextAlign.start,
-            style: const TextStyle(
-              color: CupertinoColors.black,
-              fontSize: 18,
-              fontWeight: FontWeight.w500
+    return Container(
+      padding: const EdgeInsets.only(right: 10),
+      decoration: decoration,
+      child: CupertinoButton(
+        onPressed: _handleActionButtonPressed,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.start,
+          children: [
+            Icon(
+              iconData,
+              color: textColor,
             ),
-          )
-        ],
-      )
+            const SizedBox(width: 8),
+            Text(
+              title,
+              textAlign: TextAlign.start,
+              style: TextStyle(
+                color: textColor,
+                fontSize: 18,
+                fontWeight: FontWeight.w500
+              ),
+            )
+          ],
+        )
+      ),
     );
   }
 
@@ -134,7 +140,14 @@ class _SegmentsWidgetState extends State<SegmentsWidget> {
       return Container();
     }
 
-    _createSegmentWidget = _createSegmentWidget ?? CreateSegmentWidget(domain: _domain!);
+    _createSegmentWidget = _createSegmentWidget ?? CreateSegmentWidget(
+      domain: _domain!,
+      onCreated: () {
+        updateState(() {
+          _viewState = _SegmentsWidgetViewState.displayingSegmentsList;
+        });
+      },
+    );
     _segmentsListWidget = _segmentsListWidget ?? SegmentsListWidget(domain: _domain!);
     _segmentDetailsWidget = _segmentDetailsWidget ?? SegmentDetailsWidget();
 

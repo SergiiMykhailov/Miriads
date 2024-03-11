@@ -247,6 +247,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
       if (_domain != null) {
         _walletsListWidget.reload(_domain!);
+        _segmentsWidget.reload(_domain!);
       }
     });
   }

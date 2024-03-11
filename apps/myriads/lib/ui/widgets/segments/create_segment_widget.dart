@@ -1,7 +1,9 @@
 import 'package:flutter/cupertino.dart';
+import 'package:myriads/firestore/firestore_client.dart';
 import 'package:myriads/ui/theme/app_theme.dart';
 import 'package:myriads/ui/widgets/dropdown_text_items_picker.dart';
 import 'package:myriads/ui/widgets/text_input_field.dart';
+import 'package:myriads/utils/widget_extensions.dart';
 
 // ignore: must_be_immutable
 class CreateSegmentWidget extends StatefulWidget {
@@ -10,20 +12,26 @@ class CreateSegmentWidget extends StatefulWidget {
 
   const CreateSegmentWidget({
     required String domain,
+    VoidCallback? onCreated,
     Key? key
   })
     : _domain = domain
+    , _onCreated = onCreated
     , super(key: key);
 
   // Overridden methods
 
   @override
   // ignore: no_logic_in_create_state
-  State<StatefulWidget> createState() => _CreateSegmentWidgetState(domain: _domain);
+  State<StatefulWidget> createState() => _CreateSegmentWidgetState(
+    domain: _domain,
+    onCreated: _onCreated
+  );
 
   // Internal fields
 
   final String _domain;
+  final VoidCallback? _onCreated;
 
 }
 
@@ -32,9 +40,11 @@ class _CreateSegmentWidgetState extends State<CreateSegmentWidget> {
   // Public methods and properties
 
   _CreateSegmentWidgetState({
-    required String domain
+    required String domain,
+    required VoidCallback? onCreated
   })
-    : _domain = domain;
+    : _domain = domain
+    , _onCreated = onCreated;
 
   // Overridden methods
 
@@ -48,7 +58,7 @@ class _CreateSegmentWidgetState extends State<CreateSegmentWidget> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const SizedBox(height: 24),
-          Row(children: [Expanded(child: _nameInput)]),
+          Row(children: [Expanded(child: _titleInput)]),
           const SizedBox(height: 12),
           Row(children: [Expanded(child: _descriptionInput)]),
           const SizedBox(height: 56),
@@ -164,24 +174,26 @@ class _CreateSegmentWidgetState extends State<CreateSegmentWidget> {
                   borderRadius: BorderRadius.circular(12.0),
                 ),
                 child: CupertinoButton(
-                  onPressed: _handleCreateButtonPressed,
-                  child: const Row(
+                  onPressed: _isCreating ? null : _handleCreateButtonPressed,
+                  child: Row(
                     mainAxisAlignment: MainAxisAlignment.start,
                     children: [
-                      Icon(
+                      const Icon(
                         CupertinoIcons.add,
                         color: CupertinoColors.black,
                       ),
-                      SizedBox(width: 8),
-                      Text(
-                        'Create',
-                        textAlign: TextAlign.start,
-                        style: TextStyle(
-                          color: CupertinoColors.black,
-                          fontSize: 18,
-                          fontWeight: FontWeight.w500
-                        ),
-                      )
+                      const SizedBox(width: 8),
+                      _isCreating
+                        ? const CupertinoActivityIndicator(color: CupertinoColors.black)
+                        : const Text(
+                            'Create',
+                            textAlign: TextAlign.start,
+                            style: TextStyle(
+                              color: CupertinoColors.black,
+                              fontSize: 18,
+                              fontWeight: FontWeight.w500
+                            ),
+                          )
                     ],
                   )
                 ),
@@ -197,20 +209,62 @@ class _CreateSegmentWidgetState extends State<CreateSegmentWidget> {
 
   // Internal methods
 
-  void _handleCreateButtonPressed() {
+  void _handleCreateButtonPressed() async {
+    updateState(() {
+      _isCreating = true;
+    });
 
+    final title = _titleInput.text;
+    final description = _descriptionInput.text;
+    int? minWalletAgeInDays = _selectedWalletAgeFromIndex > 0
+      ? _availablePeriodsInDays.keys.elementAt(_selectedWalletAgeFromIndex)
+      : null;
+    int? maxWalletAgeInDays = _selectedWalletAgeToIndex > 0
+      ? _availablePeriodsInDays.keys.elementAt(_selectedWalletAgeToIndex)
+      : null;
+    int? transactionsCountPeriod = _selectedTransactionsCountPeriodIndex > 0
+      ? _availablePeriodsInDays.keys.elementAt(_selectedTransactionsCountPeriodIndex)
+      : null;
+    int? minTransactionsCountPerPeriod = _selectedTransactionsCountFromIndex > 0
+      ? _availableTransactionsCount.keys.elementAt(_selectedTransactionsCountFromIndex)
+      : null;
+    int? maxTransactionsCountPerPeriod = _selectedTransactionsCountToIndex > 0
+      ? _availableTransactionsCount.keys.elementAt(_selectedTransactionsCountToIndex)
+      : null;
+
+    await FirestoreClient.registerSegment(
+      domain: _domain,
+      title: title,
+      description: description,
+      minWalletAgeInDays: minWalletAgeInDays,
+      maxWalletAgeInDays: maxWalletAgeInDays,
+      transactionsCountPeriodInDays: transactionsCountPeriod,
+      minTransactionsCountPerPeriod: minTransactionsCountPerPeriod,
+      maxTransactionsCountPerPeriod: maxTransactionsCountPerPeriod
+    );
+
+    updateState(() {
+      _isCreating = false;
+
+      if (_onCreated != null) {
+        _onCreated();
+      }
+    });
   }
 
   // Internal fields
 
   final String _domain;
-  final _nameInput = TextInputField(placeholder: 'Segment name');
+  final VoidCallback? _onCreated;
+
+  final _titleInput = TextInputField(placeholder: 'Segment name');
   final _descriptionInput = TextInputField(placeholder: 'Segment description');
   int _selectedWalletAgeFromIndex = 0;
   int _selectedWalletAgeToIndex = 0;
   int _selectedTransactionsCountPeriodIndex = 0;
   int _selectedTransactionsCountFromIndex = 0;
   int _selectedTransactionsCountToIndex = 0;
+  bool _isCreating = false;
 
   final _availablePeriodsInDays = {
     -1 : 'Any',  // Corresponds to wallet age without time limitation
