@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:myriads/firestore/firestore_client.dart';
+import 'package:myriads/models/segment_info.dart';
 import 'package:myriads/ui/theme/app_theme.dart';
 import 'package:myriads/ui/widgets/dropdown_text_items_picker.dart';
 import 'package:myriads/ui/widgets/text_input_field.dart';
@@ -232,8 +233,7 @@ class _CreateSegmentWidgetState extends State<CreateSegmentWidget> {
       ? _availableTransactionsCount.keys.elementAt(_selectedTransactionsCountToIndex)
       : null;
 
-    await FirestoreClient.registerSegment(
-      domain: _domain,
+    final segmentInfo = SegmentInfo(
       title: title,
       description: description,
       minWalletAgeInDays: minWalletAgeInDays,
@@ -241,6 +241,11 @@ class _CreateSegmentWidgetState extends State<CreateSegmentWidget> {
       transactionsCountPeriodInDays: transactionsCountPeriod,
       minTransactionsCountPerPeriod: minTransactionsCountPerPeriod,
       maxTransactionsCountPerPeriod: maxTransactionsCountPerPeriod
+    );
+
+    await FirestoreClient.registerSegment(
+      domain: _domain,
+      segmentInfo: segmentInfo
     );
 
     updateState(() {

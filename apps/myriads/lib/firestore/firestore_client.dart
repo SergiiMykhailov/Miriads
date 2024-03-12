@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:myriads/models/segment_info.dart';
 import 'package:myriads/models/user_wallets_info.dart';
 import 'package:myriads/models/user_info.dart';
 import 'package:myriads/firestore/parsing_utils.dart';
@@ -63,15 +66,9 @@ class FirestoreClient {
     return null;
   }
 
-  static Future<void> registerSegment({
+  static Future<String> registerSegment({
     required String domain,
-    required String title,
-    required String description,
-    int? minWalletAgeInDays,
-    int? maxWalletAgeInDays,
-    int? transactionsCountPeriodInDays,
-    int? minTransactionsCountPerPeriod,
-    int? maxTransactionsCountPerPeriod
+    required SegmentInfo segmentInfo
   }) async {
     final adjustedDomain = _adjustDomain(domain);
     final segmentId = DateTime.now().millisecondsSinceEpoch.toString();
@@ -84,8 +81,8 @@ class FirestoreClient {
       .doc(segmentId);
 
     Map<String, dynamic> data = {
-      FirestoreKeys.title : title,
-      FirestoreKeys.description : description
+      FirestoreKeys.title : segmentInfo.title,
+      FirestoreKeys.description : segmentInfo.description
     };
 
     validateParameterAndAddToData(int? parameter, String parameterName) {
@@ -94,15 +91,41 @@ class FirestoreClient {
       }
     }
 
-    validateParameterAndAddToData(minWalletAgeInDays, FirestoreKeys.minWalletAgeInDays);
-    validateParameterAndAddToData(maxWalletAgeInDays, FirestoreKeys.maxWalletAgeInDays);
-    validateParameterAndAddToData(transactionsCountPeriodInDays, FirestoreKeys.transactionsCountPeriodInDays);
-    validateParameterAndAddToData(minTransactionsCountPerPeriod, FirestoreKeys.minTransactionsCountPerPeriod);
-    validateParameterAndAddToData(maxTransactionsCountPerPeriod, FirestoreKeys.maxTransactionsCountPerPeriod);
+    validateParameterAndAddToData(segmentInfo.minWalletAgeInDays, FirestoreKeys.minWalletAgeInDays);
+    validateParameterAndAddToData(segmentInfo.maxWalletAgeInDays, FirestoreKeys.maxWalletAgeInDays);
+    validateParameterAndAddToData(segmentInfo.transactionsCountPeriodInDays, FirestoreKeys.transactionsCountPeriodInDays);
+    validateParameterAndAddToData(segmentInfo.minTransactionsCountPerPeriod, FirestoreKeys.minTransactionsCountPerPeriod);
+    validateParameterAndAddToData(segmentInfo.maxTransactionsCountPerPeriod, FirestoreKeys.maxTransactionsCountPerPeriod);
 
     await segmentDocument.set(data);
 
-    await Future.delayed(const Duration(seconds: 3));
+    return segmentId;
+  }
+
+  static Future<List<SegmentInfo>> loadAllSegments({
+    required String domain
+  }) async {
+    List<SegmentInfo> result = [];
+
+    final adjustedDomain = _adjustDomain(domain);
+    final firestore = await FirestoreUtils.initializedSharedInstance();
+    final segmentsSnapshot = await firestore
+      .collection(FirestoreKeys.domains)
+      .doc(adjustedDomain)
+      .collection(FirestoreKeys.segments)
+      .get();
+
+    for (final segmentDocument in segmentsSnapshot.docs) {
+      final segmentId = segmentDocument.id;
+
+      final segmentData = segmentDocument.data();
+      final segment = _segmentInfoFromDocumentData(segmentData, segmentId);
+      if (segment != null) {
+        result.add(segment);
+      }
+    }
+
+    return result;
   }
 
   // Internal methods
@@ -123,6 +146,34 @@ class FirestoreClient {
     final domain = tryGetValueFromMap<String>(userDocumentData, FirestoreKeys.domain);
     if (domain != null) {
       return UserInfo(email: userEmail, domain: domain);
+    }
+
+    return null;
+  }
+
+  static SegmentInfo? _segmentInfoFromDocumentData(
+    Map<String, dynamic> segmentDocumentData,
+    String segmentId
+  ) {
+    final title = tryGetValueFromMap<String>(segmentDocumentData, FirestoreKeys.title);
+    final description = tryGetValueFromMap<String>(segmentDocumentData, FirestoreKeys.description);
+    final minWalletAgeInDays = tryGetValueFromMap<int>(segmentDocumentData, FirestoreKeys.minWalletAgeInDays);
+    final maxWalletAgeInDays = tryGetValueFromMap<int>(segmentDocumentData, FirestoreKeys.maxWalletAgeInDays);
+    final transactionsCountPeriodInDays = tryGetValueFromMap<int>(segmentDocumentData, FirestoreKeys.transactionsCountPeriodInDays);
+    final minTransactionsCountPerPeriod = tryGetValueFromMap<int>(segmentDocumentData, FirestoreKeys.minTransactionsCountPerPeriod);
+    final maxTransactionsCountPerPeriod = tryGetValueFromMap<int>(segmentDocumentData, FirestoreKeys.maxTransactionsCountPerPeriod);
+
+    if (title != null && description != null) {
+      return SegmentInfo(
+        title: title,
+        description: description,
+        id: segmentId,
+        minWalletAgeInDays: minWalletAgeInDays,
+        maxWalletAgeInDays: maxWalletAgeInDays,
+        transactionsCountPeriodInDays: transactionsCountPeriodInDays,
+        minTransactionsCountPerPeriod: minTransactionsCountPerPeriod,
+        maxTransactionsCountPerPeriod: maxTransactionsCountPerPeriod
+      );
     }
 
     return null;

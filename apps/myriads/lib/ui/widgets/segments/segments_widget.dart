@@ -5,7 +5,6 @@ import 'package:myriads/ui/widgets/segments/segments_list_widget.dart';
 import 'package:myriads/utils/widget_extensions.dart';
 
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
 
 // ignore: must_be_immutable
 class SegmentsWidget extends StatefulWidget {
@@ -78,8 +77,11 @@ class _SegmentsWidgetState extends State<SegmentsWidget> {
           padding: const EdgeInsets.only(right: 24, bottom: 24, top: 24),
           child: Container(
             decoration: BoxDecoration(
-              color: AppTheme.secondaryBackgroundColor,
               borderRadius: BorderRadius.circular(16.0),
+              border: Border.all(
+                color: AppTheme.secondaryBackgroundColor,
+                width: 1.0,
+              )
             ),
             child: _buildContent(),
           )
@@ -92,8 +94,8 @@ class _SegmentsWidgetState extends State<SegmentsWidget> {
 
   Widget _makeActionButton() {
     final iconData = _viewState == _SegmentsWidgetViewState.displayingSegmentsList
-      ? Icons.add
-      : Icons.navigate_before;
+      ? CupertinoIcons.add
+      : CupertinoIcons.back;
     final title = _viewState == _SegmentsWidgetViewState.displayingSegmentsList
       ? 'Create segment'
       : 'To list';
@@ -144,6 +146,7 @@ class _SegmentsWidgetState extends State<SegmentsWidget> {
       domain: _domain!,
       onCreated: () {
         updateState(() {
+          _segmentsListWidget?.reload();
           _viewState = _SegmentsWidgetViewState.displayingSegmentsList;
         });
       },
