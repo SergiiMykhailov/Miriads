@@ -1,7 +1,7 @@
-import 'package:flutter/material.dart';
-import 'package:myriads/firestore/firestore_client.dart';
+import 'package:myriads/api/firestore/firestore_client.dart';
 import 'package:myriads/models/segment_info.dart';
 import 'package:myriads/ui/theme/app_theme.dart';
+import 'package:myriads/utils/delayed_utils.dart';
 import 'package:myriads/utils/widget_extensions.dart';
 
 import 'package:flutter/cupertino.dart';
@@ -23,7 +23,14 @@ class SegmentsListWidget extends StatefulWidget {
     , super(key: key);
 
   void reload() {
-    _state?.reload();
+    DelayedUtils.waitForConditionAndExecute(
+      condition: () {
+        return _state != null;
+      },
+      callback: () {
+        _state!.reload();
+      }
+    );
   }
 
   // Overridden methods

@@ -4,7 +4,7 @@ import 'package:myriads/ui/widgets/error_message_widget.dart';
 import 'package:myriads/ui/widgets/getting_started_widget.dart';
 import 'package:myriads/ui/widgets/segments/segments_widget.dart';
 import 'package:myriads/ui/widgets/wallets_list_widget.dart';
-import 'package:myriads/firestore/firestore_client.dart';
+import 'package:myriads/api/firestore/firestore_client.dart';
 import 'package:myriads/utils/widget_extensions.dart';
 
 import 'package:flutter/cupertino.dart';

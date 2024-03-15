@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:myriads/models/segment_info.dart';
 import 'package:myriads/models/user_wallets_info.dart';
 import 'package:myriads/models/user_info.dart';
-import 'package:myriads/firestore/parsing_utils.dart';
+import 'package:myriads/api/firestore/parsing_utils.dart';
 import 'package:myriads/utils/string_extensions.dart';
 
 import 'firestore_keys.dart';
@@ -125,6 +125,28 @@ class FirestoreClient {
       }
     }
 
+    return result;
+  }
+
+  static Future<SegmentInfo?> loadSegment({
+    required String domain,
+    required String segmentId
+  }) async {
+    final adjustedDomain = _adjustDomain(domain);
+    final firestore = await FirestoreUtils.initializedSharedInstance();
+    final segmentDocument = await firestore
+      .collection(FirestoreKeys.domains)
+      .doc(adjustedDomain)
+      .collection(FirestoreKeys.segments)
+      .doc(segmentId)
+      .get();
+
+    final segmentData = segmentDocument.data();
+    if (segmentData == null) {
+      return null;
+    }
+
+    final result = _segmentInfoFromDocumentData(segmentData, segmentId);
     return result;
   }
 

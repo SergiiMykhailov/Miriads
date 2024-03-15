@@ -1,4 +1,4 @@
-import 'package:myriads/firestore/firestore_utils.dart';
+import 'package:myriads/api/firestore/firestore_utils.dart';
 import 'package:myriads/ui/screens/home_screen.dart';
 
 import 'package:firebase_auth/firebase_auth.dart' hide EmailAuthProvider;

@@ -1,5 +1,5 @@
 import 'package:flutter/cupertino.dart';
-import 'package:myriads/firestore/firestore_client.dart';
+import 'package:myriads/api/firestore/firestore_client.dart';
 import 'package:myriads/models/segment_info.dart';
 import 'package:myriads/ui/theme/app_theme.dart';
 import 'package:myriads/ui/widgets/dropdown_text_items_picker.dart';

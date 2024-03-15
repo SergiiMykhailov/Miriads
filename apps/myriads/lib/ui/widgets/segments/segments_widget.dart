@@ -1,3 +1,4 @@
+import 'package:myriads/models/segment_info.dart';
 import 'package:myriads/ui/theme/app_theme.dart';
 import 'package:myriads/ui/widgets/segments/create_segment_widget.dart';
 import 'package:myriads/ui/widgets/segments/segment_details_widget.dart';
@@ -151,7 +152,18 @@ class _SegmentsWidgetState extends State<SegmentsWidget> {
         });
       },
     );
-    _segmentsListWidget = _segmentsListWidget ?? SegmentsListWidget(domain: _domain!);
+    _segmentsListWidget = _segmentsListWidget ?? SegmentsListWidget(
+      domain: _domain!,
+      onSegmentSelected: (SegmentInfo selectedSegment) {
+        if (selectedSegment.id != null) {
+          updateState(() {
+            _viewState = _SegmentsWidgetViewState.displayingSegmentDetails;
+          });
+
+          _segmentDetailsWidget?.reload(domain: _domain!, segmentId: selectedSegment.id!);
+        }
+      }
+    );
     _segmentDetailsWidget = _segmentDetailsWidget ?? SegmentDetailsWidget();
 
     return Stack(
