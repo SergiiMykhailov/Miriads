@@ -119,7 +119,7 @@ class _SegmentsListWidgetState extends State<SegmentsListWidget> {
       segments.add(const SizedBox(height: 12));
       segments.add(
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 24),
           child: Container(
             width: double.infinity,
             decoration: BoxDecoration(
@@ -161,7 +161,7 @@ class _SegmentsListWidgetState extends State<SegmentsListWidget> {
       );
     }
 
-    segments.add(const SizedBox(height: 12));
+    segments.add(const SizedBox(height: 24));
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

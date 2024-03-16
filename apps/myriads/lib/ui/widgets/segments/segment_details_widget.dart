@@ -71,29 +71,19 @@ class _SegmentDetailsWidgetState extends State<SegmentDetailsWidget> {
   // Internal methods
 
   Widget _buildItems() {
-    if (_loadedSegmentItems!.isEmpty) {
-      return const Center(
-        child: Text(
-          'There are no items matching your criteria',
-          textAlign: TextAlign.start,
-          style: TextStyle(
-            color: AppTheme.textColorBody,
-            fontSize: 16
-          ),
-        ),
-      );
-    }
-
     var text = '';
 
-    for (final segmentItem in _loadedSegmentItems!) {
-      var adjustedUserId = segmentItem.userId;
-      if (adjustedUserId.startsWith('ga_')) {
-        adjustedUserId = adjustedUserId.substring(3);
-      }
-      adjustedUserId = adjustedUserId.replaceAll('_', '.');
+    if (_loadedSegmentItems != null) {
+      for (final segmentItem in _loadedSegmentItems!) {
+        var adjustedUserId = segmentItem.userId;
+        if (adjustedUserId.startsWith('ga_')) {
+          adjustedUserId = adjustedUserId.substring(3);
+        }
+        adjustedUserId = adjustedUserId.replaceAll('_', '.');
 
-      text += '$adjustedUserId, ${segmentItem.walletAddress}, ${segmentItem.walletBalance}, ${segmentItem.transactionsCount}\n';
+        text += '$adjustedUserId, ${segmentItem.walletAddress}, ${segmentItem
+          .walletBalance}, ${segmentItem.transactionsCount}\n';
+      }
     }
 
     return Container(
@@ -107,20 +97,40 @@ class _SegmentDetailsWidgetState extends State<SegmentDetailsWidget> {
             textAlign: TextAlign.start,
             style: const TextStyle(
               color: AppTheme.textColorBody,
-              fontSize: 16
+              fontSize: 20
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 4),
           Text(
             _description!,
             textAlign: TextAlign.start,
             style: const TextStyle(
               color: AppTheme.textColorBody,
-              fontSize: 12
+              fontSize: 14
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Segment parameters: $_segmentParameters',
+            textAlign: TextAlign.start,
+            style: const TextStyle(
+              color: AppTheme.textColorBody,
+              fontSize: 10
             ),
           ),
           const SizedBox(height: 36),
-          CopyableTextWidget(title: 'User ID, Wallet Address, Balance (ETH), Transactions Count', text: text)
+          _loadedSegmentItems == null || _loadedSegmentItems!.isEmpty
+            ? const Center(
+                child: Text(
+                  'There are no items matching your criteria',
+                  textAlign: TextAlign.start,
+                  style: TextStyle(
+                    color: AppTheme.textColorBody,
+                    fontSize: 16
+                  ),
+                ),
+              )
+            : CopyableTextWidget(title: 'User ID, Wallet Address, Balance (ETH), Transactions Count', text: text)
         ],
       )
     );
@@ -131,6 +141,8 @@ class _SegmentDetailsWidgetState extends State<SegmentDetailsWidget> {
     required String segmentId
   }) async {
     _loadedSegmentItems = null;
+    String segmentParameters = '';
+
     List<_SegmentItem> items = [];
 
     final segment = await FirestoreClient.loadSegment(domain: domain, segmentId: segmentId);
@@ -138,8 +150,21 @@ class _SegmentDetailsWidgetState extends State<SegmentDetailsWidget> {
       return;
     }
 
-    _title = segment.title;
-    _description = segment.description;
+    segmentParameters += segment.minWalletAgeInDays != null
+      ? 'wallet age from: \'${segment.minWalletAgeInDays}\''
+      : 'wallet age from: Any';
+    segmentParameters += segment.maxWalletAgeInDays != null
+      ? ', wallet age to: \'${segment.maxWalletAgeInDays}\''
+      : ', wallet age to: Any';
+    segmentParameters += segment.transactionsCountPeriodInDays != null
+      ? ', transactions count period (days): \'${segment.transactionsCountPeriodInDays}\''
+      : ', transactions count period (days): Any';
+    segmentParameters += segment.minTransactionsCountPerPeriod != null
+      ? ', min transactions count per period: \'${segment.minTransactionsCountPerPeriod}\''
+      : ', min transactions count per period: Any';
+    segmentParameters += segment.maxTransactionsCountPerPeriod != null
+      ? ', max transactions count per period: \'${segment.maxTransactionsCountPerPeriod}\''
+      : ', max transactions count per period: Any';
 
     final userWallets = await FirestoreClient.loadAllUsersWallets(domain);
     List<String> walletsAddresses = [];
@@ -218,7 +243,10 @@ class _SegmentDetailsWidgetState extends State<SegmentDetailsWidget> {
     }
 
     updateState(() {
+      _title = segment.title;
+      _description = segment.description;
       _loadedSegmentItems = items;
+      _segmentParameters = segmentParameters;
     });
   }
 
@@ -227,6 +255,7 @@ class _SegmentDetailsWidgetState extends State<SegmentDetailsWidget> {
   String? _title;
   String? _description;
   List<_SegmentItem>? _loadedSegmentItems;
+  String _segmentParameters = '';
 
 }
 

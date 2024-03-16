@@ -2,7 +2,6 @@ import 'package:flutter/cupertino.dart';
 import 'package:myriads/api/firestore/firestore_client.dart';
 import 'package:myriads/models/segment_info.dart';
 import 'package:myriads/ui/theme/app_theme.dart';
-import 'package:myriads/ui/widgets/dropdown_text_items_picker.dart';
 import 'package:myriads/ui/widgets/text_input_field.dart';
 import 'package:myriads/utils/widget_extensions.dart';
 
@@ -52,7 +51,7 @@ class _CreateSegmentWidgetState extends State<CreateSegmentWidget> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: AppTheme.backgroundColor,
+      padding: const EdgeInsets.symmetric(horizontal: 24),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         mainAxisAlignment: MainAxisAlignment.start,
@@ -70,40 +69,14 @@ class _CreateSegmentWidgetState extends State<CreateSegmentWidget> {
               fontSize: 16
             )
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 12),
           Row(
             mainAxisAlignment: MainAxisAlignment.start,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              const Text(
-                'From:',
-                style: TextStyle(
-                  color: AppTheme.textColorBody,
-                  fontSize: 14
-                )
-              ),
+              Expanded(child: _minWalletAgeInput),
               const SizedBox(width: 16),
-              DropDownItemsPicker(
-                items: _availablePeriodsInDays.values,
-                onItemSelected: (int selectedIndex) {
-                  _selectedWalletAgeFromIndex = selectedIndex;
-                },
-              ),
-              const SizedBox(width: 64),
-              const Text(
-                'To:',
-                style: TextStyle(
-                  color: AppTheme.textColorBody,
-                  fontSize: 14
-                )
-              ),
-              const SizedBox(width: 16),
-              DropDownItemsPicker(
-                items: _availablePeriodsInDays.values,
-                onItemSelected: (int selectedIndex) {
-                  _selectedWalletAgeToIndex = selectedIndex;
-                },
-              ),
+              Expanded(child: _maxWalletAgeInput)
             ]
           ),
           const SizedBox(height: 56),
@@ -114,55 +87,16 @@ class _CreateSegmentWidgetState extends State<CreateSegmentWidget> {
               fontSize: 16
             )
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 12),
           Row(
             mainAxisAlignment: MainAxisAlignment.start,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              const Text(
-                'Period:',
-                style: TextStyle(
-                  color: AppTheme.textColorBody,
-                  fontSize: 14
-                )
-              ),
-              const SizedBox(width: 16),
-              DropDownItemsPicker(
-                items: _availablePeriodsInDays.values,
-                onItemSelected: (int selectedIndex) {
-                  _selectedTransactionsCountPeriodIndex = selectedIndex;
-                },
-              ),
+              Expanded(child: _transactionsCountPeriodInput),
               const SizedBox(width: 64),
-              const Text(
-                'From:',
-                style: TextStyle(
-                  color: AppTheme.textColorBody,
-                  fontSize: 14
-                )
-              ),
-              const SizedBox(width: 16),
-              DropDownItemsPicker(
-                items: _availableTransactionsCount.values,
-                onItemSelected: (int selectedIndex) {
-                  _selectedTransactionsCountFromIndex = selectedIndex;
-                },
-              ),
+              Expanded(child: _minTransactionsCountPerPeriodInput),
               const SizedBox(width: 64),
-              const Text(
-                'To:',
-                style: TextStyle(
-                  color: AppTheme.textColorBody,
-                  fontSize: 14
-                )
-              ),
-              const SizedBox(width: 16),
-              DropDownItemsPicker(
-                items: _availableTransactionsCount.values,
-                onItemSelected: (int selectedIndex) {
-                  _selectedTransactionsCountToIndex = selectedIndex;
-                },
-              ),
+              Expanded(child: _maxTransactionsCountPerPeriodInput),
             ]
           ),
           const SizedBox(height: 96),
@@ -217,21 +151,11 @@ class _CreateSegmentWidgetState extends State<CreateSegmentWidget> {
 
     final title = _titleInput.text;
     final description = _descriptionInput.text;
-    int? minWalletAgeInDays = _selectedWalletAgeFromIndex > 0
-      ? _availablePeriodsInDays.keys.elementAt(_selectedWalletAgeFromIndex)
-      : null;
-    int? maxWalletAgeInDays = _selectedWalletAgeToIndex > 0
-      ? _availablePeriodsInDays.keys.elementAt(_selectedWalletAgeToIndex)
-      : null;
-    int? transactionsCountPeriod = _selectedTransactionsCountPeriodIndex > 0
-      ? _availablePeriodsInDays.keys.elementAt(_selectedTransactionsCountPeriodIndex)
-      : null;
-    int? minTransactionsCountPerPeriod = _selectedTransactionsCountFromIndex > 0
-      ? _availableTransactionsCount.keys.elementAt(_selectedTransactionsCountFromIndex)
-      : null;
-    int? maxTransactionsCountPerPeriod = _selectedTransactionsCountToIndex > 0
-      ? _availableTransactionsCount.keys.elementAt(_selectedTransactionsCountToIndex)
-      : null;
+    int? minWalletAgeInDays = int.tryParse(_minWalletAgeInput.text);
+    int? maxWalletAgeInDays = int.tryParse(_maxWalletAgeInput.text);
+    int? transactionsCountPeriod = int.tryParse(_transactionsCountPeriodInput.text);
+    int? minTransactionsCountPerPeriod = int.tryParse(_minTransactionsCountPerPeriodInput.text);
+    int? maxTransactionsCountPerPeriod = int.tryParse(_maxTransactionsCountPerPeriodInput.text);
 
     final segmentInfo = SegmentInfo(
       title: title,
@@ -264,32 +188,10 @@ class _CreateSegmentWidgetState extends State<CreateSegmentWidget> {
 
   final _titleInput = TextInputField(placeholder: 'Segment name');
   final _descriptionInput = TextInputField(placeholder: 'Segment description');
-  int _selectedWalletAgeFromIndex = 0;
-  int _selectedWalletAgeToIndex = 0;
-  int _selectedTransactionsCountPeriodIndex = 0;
-  int _selectedTransactionsCountFromIndex = 0;
-  int _selectedTransactionsCountToIndex = 0;
+  final _minWalletAgeInput = TextInputField(placeholder: 'Min wallet age (days)');
+  final _maxWalletAgeInput = TextInputField(placeholder: 'Max wallet age (days)');
+  final _transactionsCountPeriodInput = TextInputField(placeholder: 'Transactions count period (days)');
+  final _minTransactionsCountPerPeriodInput = TextInputField(placeholder: 'Min transactions count');
+  final _maxTransactionsCountPerPeriodInput = TextInputField(placeholder: 'Max transactions count');
   bool _isCreating = false;
-
-  final _availablePeriodsInDays = {
-    -1 : 'Any',  // Corresponds to wallet age without time limitation
-    7 : '7 days',
-    30 : '1 month',
-    90 : '3 months',
-    180 : '6 months',
-    365 : '1 year',
-    730 : '2 years',
-    1825 : '5 years'
-  };
-
-  final _availableTransactionsCount = {
-    -1 : 'Any',
-    10 : '10',
-    100 : '100',
-    1000 : '1000',
-    10000 : '10 000',
-    100000 : '100 000',
-    1000000 : '1 000 000'
-  };
-
 }
