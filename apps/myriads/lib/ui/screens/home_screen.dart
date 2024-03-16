@@ -1,11 +1,13 @@
+import 'package:flutter/material.dart';
 import 'package:myriads/ui/theme/app_theme.dart';
 import 'package:myriads/ui/widgets/error_message_widget.dart';
 import 'package:myriads/ui/widgets/getting_started_widget.dart';
+import 'package:myriads/ui/widgets/segments/segments_widget.dart';
 import 'package:myriads/ui/widgets/wallets_list_widget.dart';
+import 'package:myriads/api/firestore/firestore_client.dart';
 import 'package:myriads/utils/widget_extensions.dart';
 
 import 'package:flutter/cupertino.dart';
-import 'package:myriads/firestore/firestore_client.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({
@@ -25,7 +27,7 @@ class HomeScreen extends StatefulWidget {
   final String _userEmail;
 }
 
-enum _HomeScreenSelectedTab { gettingStarted, statistics }
+enum _HomeScreenSelectedTab { gettingStarted, statistics, segments }
 
 class _HomeScreenState extends State<HomeScreen> {
 
@@ -90,6 +92,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   const SizedBox(height: 16),
                   _makeButton(
                     title: 'Getting started',
+                    iconData: Icons.start,
                     isHighlighted: _selectedTab == _HomeScreenSelectedTab.gettingStarted,
                     onPressed: () {
                       _activateTab(_HomeScreenSelectedTab.gettingStarted);
@@ -97,9 +100,18 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   _makeButton(
                     title: 'Statistics',
+                    iconData: Icons.list,
                     isHighlighted: _selectedTab == _HomeScreenSelectedTab.statistics,
                     onPressed: () {
                       _activateTab(_HomeScreenSelectedTab.statistics);
+                    }
+                  ),
+                  _makeButton(
+                    title: 'Segments',
+                    iconData: Icons.filter_list,
+                    isHighlighted: _selectedTab == _HomeScreenSelectedTab.segments,
+                    onPressed: () {
+                      _activateTab(_HomeScreenSelectedTab.segments);
                     }
                   )
                 ]
@@ -176,6 +188,10 @@ class _HomeScreenState extends State<HomeScreen> {
           _makeContentPanel(
             panelWidget: _walletsListWidget,
             isVisible: _selectedTab == _HomeScreenSelectedTab.statistics
+          ),
+          _makeContentPanel(
+            panelWidget: _segmentsWidget,
+            isVisible: _selectedTab == _HomeScreenSelectedTab.segments
           )
         ],
       )
@@ -184,6 +200,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _makeButton({
     required String title,
+    required IconData iconData,
     required bool isHighlighted,
     required VoidCallback onPressed
   }) {
@@ -202,12 +219,14 @@ class _HomeScreenState extends State<HomeScreen> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.start,
                 children: [
+                  Icon(iconData, color: AppTheme.textColorBody),
+                  const SizedBox(width: 16),
                   Text(
                     title,
                     textAlign: TextAlign.start,
                     style: const TextStyle(
                       color: AppTheme.textColorBody,
-                      fontSize: 14
+                      fontSize: 16
                     ),
                   )
                 ],
@@ -228,6 +247,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
       if (_domain != null) {
         _walletsListWidget.reload(_domain!);
+        _segmentsWidget.reload(_domain!);
       }
     });
   }
@@ -242,6 +262,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   final _walletsListWidget = WalletsListWidget();
   final _gettingStartedWidget = const GettingStartedWidget();
+  final _segmentsWidget = SegmentsWidget();
   final String _userEmail;
   bool _isLoading = true;
   String? _domain;

@@ -1,7 +1,8 @@
-import 'package:myriads/firestore/firestore_client.dart';
+import 'package:myriads/api/firestore/firestore_client.dart';
 import 'package:myriads/models/user_wallets_info.dart';
 import 'package:myriads/ui/theme/app_theme.dart';
 import 'package:myriads/ui/widgets/copyable_text_widget.dart';
+import 'package:myriads/utils/delayed_utils.dart';
 import 'package:myriads/utils/widget_extensions.dart';
 
 import 'package:flutter/cupertino.dart';
@@ -16,9 +17,10 @@ class WalletsListWidget extends StatefulWidget {
   void reload(String domain) {
     _domain = domain;
 
-    if (_state != null) {
-      _state!.reload(domain);
-    }
+    DelayedUtils.waitForConditionAndExecute(
+      condition: () { return _state != null; },
+      callback: () { _state!.reload(_domain); }
+    );
   }
 
   // Overridden methods

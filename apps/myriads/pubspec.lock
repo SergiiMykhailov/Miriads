@@ -381,6 +381,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.1.1"
+  logger:
+    dependency: transitive
+    description:
+      name: logger
+      sha256: "7ad7215c15420a102ec687bb320a7312afd449bac63bfb1c60d9787c27b9767f"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.4.0"
   matcher:
     dependency: transitive
     description:
@@ -405,6 +413,13 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.11.0"
+  moralis:
+    dependency: "direct main"
+    description:
+      path: "../../../moralis_flutter"
+      relative: true
+    source: path
+    version: "0.0.3+2"
   path:
     dependency: transitive
     description:
@@ -437,6 +452,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.1.8"
+  pull_down_button:
+    dependency: "direct main"
+    description:
+      name: pull_down_button
+      sha256: "235b302701ce029fd9e9470975069376a6700935bb47a5f1b3ec8a5efba07e6f"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.9.3"
   sky_engine:
     dependency: transitive
     description: flutter
