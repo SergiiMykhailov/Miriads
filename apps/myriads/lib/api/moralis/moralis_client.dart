@@ -1,4 +1,3 @@
-import 'package:myriads/api/firestore/parsing_utils.dart';
 import 'package:myriads/models/wallet_info.dart';
 
 import 'package:moralis/EVM/chains/chains.dart';
@@ -93,12 +92,4 @@ class MoralisClient {
 
   MoralisClient._();
   static Moralis? _sharedInstance;
-}
-
-class _Keys {
-  static const address = 'address';
-  static const formattedBalance = 'balance_formatted';
-
-  // Internal methods
-  _Keys._();
 }

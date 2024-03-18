@@ -33,7 +33,9 @@ class SegmentDetailsWidget extends StatefulWidget {
   @override
   // ignore: no_logic_in_create_state
   State<StatefulWidget> createState() {
-    _state = _SegmentDetailsWidgetState();
+    _state = _SegmentDetailsWidgetState(
+      onDispose: () => _state = null
+    );
     return _state!;
   }
 
@@ -46,6 +48,11 @@ class SegmentDetailsWidget extends StatefulWidget {
 class _SegmentDetailsWidgetState extends State<SegmentDetailsWidget> {
 
   // Public methods and properties
+
+  _SegmentDetailsWidgetState({
+    required VoidCallback onDispose
+  })
+    : _onDispose = onDispose;
 
   void reload({
     required String domain,
@@ -67,6 +74,13 @@ class _SegmentDetailsWidgetState extends State<SegmentDetailsWidget> {
     }
 
     return _buildItems();
+  }
+
+  @override
+  void dispose() {
+    _onDispose();
+
+    super.dispose();
   }
 
   // Internal methods
@@ -254,6 +268,7 @@ class _SegmentDetailsWidgetState extends State<SegmentDetailsWidget> {
 
   // Internal fields
 
+  VoidCallback _onDispose;
   String? _title;
   String? _description;
   List<_SegmentItem>? _loadedSegmentItems;

@@ -60,7 +60,7 @@ class _CopyableWidgetState extends State<CopyableTextWidget> {
                 _isContentCopied ? 'Copied' : 'Copy all',
                 style: const TextStyle(
                   color: AppTheme.textColorBody,
-                  fontSize: 16
+                  fontSize: 16,
                 )
               ),
               CupertinoButton(
@@ -93,7 +93,8 @@ class _CopyableWidgetState extends State<CopyableTextWidget> {
               ),
               style: const TextStyle(
                 color: AppTheme.textColorBody,
-                fontSize: 12
+                fontSize: 12,
+                height: 2
               ),
             ),
           )
