@@ -11,25 +11,19 @@ class MoralisClient {
   }) async {
     final moralisClient = _initializedMoralisInstance();
 
-    final balances = await moralisClient.evmApi.balance.getNativeBalanceMulti(
-      chain: EvmChain.ethereum,
-      addresses: walletsAddresses
-    );
-
-    if (balances == null) {
-      return [];
-    }
-
     List<WalletBalanceInfo> result = [];
 
-    for (final balance in balances) {
-      if (balance is Map<String, dynamic>) {
-        final address = tryGetValueFromMap<String>(balance, _Keys.address);
-        final nativeBalance = tryGetValueFromMap<String>(balance, _Keys.formattedBalance);
+    for (final walletAddress in walletsAddresses) {
+      final walletBalance = await moralisClient.evmApi.balance.getNativeBalance(
+        chain: EvmChain.ethereum,
+        address: walletAddress
+      );
 
-        if (address != null && nativeBalance != null) {
-          result.add(WalletBalanceInfo(address: address, nativeBalance: nativeBalance));
-        }
+      if (walletBalance != null) {
+        result.add(WalletBalanceInfo(
+          address: walletAddress,
+          nativeBalance: walletBalance
+        ));
       }
     }
 

@@ -1,6 +1,7 @@
 import 'package:collection/collection.dart';
 import 'package:myriads/api/firestore/firestore_client.dart';
 import 'package:myriads/api/moralis/moralis_client.dart';
+import 'package:myriads/models/wallet_info.dart';
 import 'package:myriads/ui/theme/app_theme.dart';
 
 import 'package:flutter/cupertino.dart';
@@ -183,61 +184,62 @@ class _SegmentDetailsWidgetState extends State<SegmentDetailsWidget> {
       final matchingWalletTransactions = walletsTransactions.firstWhereOrNull(
         (element) => element.address.toLowerCase() == walletBalance.address.toLowerCase()
       );
+      final userId = userWallets.firstWhere((element) => element.wallets.contains(walletBalance.address)).userId;
 
-      if (matchingWalletTransactions == null) {
+      if (matchingWalletTransactions == null || matchingWalletTransactions.transactions.isEmpty) {
+        items.add(_SegmentItem(
+          userId: userId,
+          walletAddress: walletBalance.address,
+          walletBalance: walletBalance.nativeBalance,
+          transactionsCount: 0
+        ));
         continue;
       }
 
-      if (segment.minWalletAgeInDays != null) {
-        final earliestTransactionTimestamp =
-          startOfCurrentDayTimestamp - segment.minWalletAgeInDays! * _Constants.millisecondsPerDay;
-        final matchingTransaction = matchingWalletTransactions.transactions.firstWhereOrNull(
-            (element) => element.timestamp < earliestTransactionTimestamp
-        );
+      // Transactions come in last-to-first order so the last one is the oldest one
+      final firstTransaction = matchingWalletTransactions.transactions.last;
 
-        if (matchingTransaction == null) {
+      if (segment.minWalletAgeInDays != null) {
+        final latestFirstTransactionTimestamp =
+          startOfCurrentDayTimestamp - segment.minWalletAgeInDays! * _Constants.millisecondsPerDay;
+
+        if (firstTransaction.timestamp > latestFirstTransactionTimestamp) {
           continue;
         }
       }
 
       if (segment.maxWalletAgeInDays != null) {
-        final earliestTransactionTimestamp =
-          startOfCurrentDayTimestamp - segment.minWalletAgeInDays! * _Constants.millisecondsPerDay;
-        final matchingTransaction = matchingWalletTransactions.transactions.firstWhereOrNull(
-            (element) => element.timestamp < earliestTransactionTimestamp
-        );
+        final earliestFirstTransactionTimestamp =
+          startOfCurrentDayTimestamp - segment.maxWalletAgeInDays! * _Constants.millisecondsPerDay;
 
-        if (matchingTransaction != null) {
+        if (firstTransaction.timestamp < earliestFirstTransactionTimestamp) {
           continue;
         }
       }
 
-      int transactionPerPeriodCount = matchingWalletTransactions.transactions.length;
+      int transactionsPerPeriodCount = matchingWalletTransactions.transactions.length;
 
       if (segment.transactionsCountPeriodInDays != null) {
         final periodStartTimestamp = startOfCurrentDayTimestamp - _Constants.millisecondsPerDay * segment.transactionsCountPeriodInDays!;
-        transactionPerPeriodCount = 0;
+        transactionsPerPeriodCount = 0;
         for (final currentTransaction in matchingWalletTransactions.transactions) {
           if (currentTransaction.timestamp > periodStartTimestamp) {
-            transactionPerPeriodCount++;
+            transactionsPerPeriodCount++;
           }
         }
 
-        if (segment.minTransactionsCountPerPeriod != null && transactionPerPeriodCount < segment.minTransactionsCountPerPeriod!) {
-          continue;
-        }
-        if (segment.maxTransactionsCountPerPeriod != null && transactionPerPeriodCount > segment.maxTransactionsCountPerPeriod!) {
+        if (segment.minTransactionsCountPerPeriod != null && transactionsPerPeriodCount < segment.minTransactionsCountPerPeriod! ||
+            segment.maxTransactionsCountPerPeriod != null && transactionsPerPeriodCount > segment.maxTransactionsCountPerPeriod!) {
           continue;
         }
       }
 
-      final userId = userWallets.firstWhere((element) => element.wallets.contains(matchingWalletTransactions.address)).userId;
       items.add(
         _SegmentItem(
           userId: userId,
           walletAddress: walletBalance.address,
           walletBalance: walletBalance.nativeBalance,
-          transactionsCount: transactionPerPeriodCount
+          transactionsCount: transactionsPerPeriodCount
         )
       );
     }
