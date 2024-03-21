@@ -1,13 +1,13 @@
-import 'package:collection/collection.dart';
 import 'package:myriads/api/firestore/firestore_client.dart';
+import 'package:myriads/api/google_analytics/google_analytics_client.dart';
 import 'package:myriads/api/moralis/moralis_client.dart';
-import 'package:myriads/models/wallet_info.dart';
 import 'package:myriads/ui/theme/app_theme.dart';
-
-import 'package:flutter/cupertino.dart';
 import 'package:myriads/ui/widgets/copyable_text_widget.dart';
 import 'package:myriads/utils/delayed_utils.dart';
 import 'package:myriads/utils/widget_extensions.dart';
+
+import 'package:collection/collection.dart';
+import 'package:flutter/cupertino.dart';
 
 // ignore: must_be_immutable
 class SegmentDetailsWidget extends StatefulWidget {
@@ -158,6 +158,12 @@ class _SegmentDetailsWidgetState extends State<SegmentDetailsWidget> {
     _loadedSegmentItems = null;
     String segmentParameters = '';
 
+    GoogleAnalyticsClient.loadAllUsersForCampaign(
+      campaignName: 'some_campaign',
+      callback: (loadedCampaignUsers) {
+      print(loadedCampaignUsers);
+    });
+
     List<_SegmentItem> items = [];
 
     final segment = await FirestoreClient.loadSegment(domain: domain, segmentId: segmentId);
@@ -268,7 +274,7 @@ class _SegmentDetailsWidgetState extends State<SegmentDetailsWidget> {
 
   // Internal fields
 
-  VoidCallback _onDispose;
+  final VoidCallback _onDispose;
   String? _title;
   String? _description;
   List<_SegmentItem>? _loadedSegmentItems;
