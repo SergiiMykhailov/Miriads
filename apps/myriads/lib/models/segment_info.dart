@@ -10,6 +10,9 @@ class SegmentInfo {
   final int? transactionsCountPeriodInDays;
   final int? minTransactionsCountPerPeriod;
   final int? maxTransactionsCountPerPeriod;
+  final String? utmSource;
+  final String? utmMedium;
+  final String? utmCampaign;
 
   SegmentInfo({
     required this.title,
@@ -19,7 +22,10 @@ class SegmentInfo {
     this.maxWalletAgeInDays,
     this.transactionsCountPeriodInDays,
     this.minTransactionsCountPerPeriod,
-    this.maxTransactionsCountPerPeriod
+    this.maxTransactionsCountPerPeriod,
+    this.utmSource,
+    this.utmMedium,
+    this.utmCampaign
   });
 
 }

@@ -1,5 +1,4 @@
 import 'package:myriads/api/firestore/firestore_client.dart';
-import 'package:myriads/models/user_wallets_info.dart';
 import 'package:myriads/ui/theme/app_theme.dart';
 import 'package:myriads/ui/widgets/copyable_text_widget.dart';
 import 'package:myriads/utils/delayed_utils.dart';
@@ -55,7 +54,7 @@ class _WalletsListWidgetState extends State<WalletsListWidget> {
     updateState(() {
       _domain = domain;
       _isLoading = true;
-      _loadedWallets = [];
+      _loadedVisitorIdToWalletsListMap = {};
 
       _reloadWallets();
     });
@@ -77,10 +76,13 @@ class _WalletsListWidgetState extends State<WalletsListWidget> {
   Widget _buildWalletsList() {
     var walletsText = '';
 
-    for (final userWalletsInfo in _loadedWallets) {
-      final currentUserWalletsText = userWalletsInfo.wallets.join(', ');
+    for (final visitorWalletsInfo in _loadedVisitorIdToWalletsListMap.entries) {
+      final visitorId = visitorWalletsInfo.key;
+      final visitorWallets = visitorWalletsInfo.value;
 
-      var adjustedUserId = userWalletsInfo.userId;
+      final currentUserWalletsText = visitorWallets.join(', ');
+
+      var adjustedUserId = visitorId;
       if (adjustedUserId.startsWith('ga_')) {
         adjustedUserId = adjustedUserId.substring(3);
       }
@@ -97,11 +99,24 @@ class _WalletsListWidgetState extends State<WalletsListWidget> {
       return;
     }
 
-    final loadedWallets = await FirestoreClient.loadAllUsersWallets(_domain!);
+    final domainVisitors = await FirestoreClient.loadAllDomainVisitors(_domain!);
+    Map<String, Set<String>> visitorIdToWalletsListMap = {};
+
+    for (final domainVisitor in domainVisitors) {
+      Set<String> visitorWallets = {};
+
+      for (final visitorSession in domainVisitor.sessions) {
+        if (visitorSession.walletId != null) {
+          visitorWallets.add(visitorSession.walletId!);
+        }
+      }
+
+      visitorIdToWalletsListMap[domainVisitor.id] = visitorWallets;
+    }
 
     updateState(() {
       _isLoading = false;
-      _loadedWallets = loadedWallets;
+      _loadedVisitorIdToWalletsListMap = visitorIdToWalletsListMap;
     });
   }
 
@@ -109,6 +124,6 @@ class _WalletsListWidgetState extends State<WalletsListWidget> {
 
   String? _domain;
   bool _isLoading = false;
-  List<UserWalletsInfo> _loadedWallets = [];
+  Map<String, Set<String>> _loadedVisitorIdToWalletsListMap = {};
 
 }

@@ -1,9 +1,10 @@
 import 'dart:async';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:myriads/models/segment_info.dart';
-import 'package:myriads/models/user_wallets_info.dart';
 import 'package:myriads/models/user_info.dart';
 import 'package:myriads/api/firestore/parsing_utils.dart';
+import 'package:myriads/models/visitor_info.dart';
 import 'package:myriads/utils/string_extensions.dart';
 
 import 'firestore_keys.dart';
@@ -15,10 +16,10 @@ class FirestoreClient {
 
   FirestoreClient._();
 
-  static Future<List<UserWalletsInfo>> loadAllUsersWallets(String domain) async {
+  static Future<List<VisitorInfo>> loadAllDomainVisitors(String domain) async {
     final adjustedDomain = _adjustDomain(domain);
 
-    List<UserWalletsInfo> result = [];
+    List<VisitorInfo> result = [];
 
     final firestore = await FirestoreUtils.initializedSharedInstance();
     final domainVisitorsSnapshot = await firestore
@@ -28,23 +29,10 @@ class FirestoreClient {
       .get();
 
     for (final visitorDocument in domainVisitorsSnapshot.docs) {
-      final userId = visitorDocument.id;
+      final visitorId = visitorDocument.id;
 
-      List<String> wallets = [];
-      final sessionsSnapshot = await visitorDocument
-        .reference.collection(FirestoreKeys.sessions).get();
-      for (final sessionDocument in sessionsSnapshot.docs) {
-        final sessionData = sessionDocument.data();
-
-        final walletId = tryGetValueFromMap<String>(sessionData, FirestoreKeys.walletId);
-        if (walletId != null && !wallets.contains(walletId)) {
-          wallets.insert(0, walletId);
-        }
-      }
-
-      if (wallets.isNotEmpty) {
-        result.add(UserWalletsInfo(userId: userId, wallets: wallets));
-      }
+      final visitorInfo = await _visitorInfoFromDocument(visitorDocument, visitorId);
+      result.add(visitorInfo);
     }
 
     return result;
@@ -85,7 +73,7 @@ class FirestoreClient {
       FirestoreKeys.description : segmentInfo.description
     };
 
-    validateParameterAndAddToData(int? parameter, String parameterName) {
+    validateParameterAndAddToData(dynamic parameter, String parameterName) {
       if (parameter != null) {
         data.addAll({ parameterName : parameter });
       }
@@ -96,6 +84,9 @@ class FirestoreClient {
     validateParameterAndAddToData(segmentInfo.transactionsCountPeriodInDays, FirestoreKeys.transactionsCountPeriodInDays);
     validateParameterAndAddToData(segmentInfo.minTransactionsCountPerPeriod, FirestoreKeys.minTransactionsCountPerPeriod);
     validateParameterAndAddToData(segmentInfo.maxTransactionsCountPerPeriod, FirestoreKeys.maxTransactionsCountPerPeriod);
+    validateParameterAndAddToData(segmentInfo.utmSource, FirestoreKeys.utmSource);
+    validateParameterAndAddToData(segmentInfo.utmMedium, FirestoreKeys.utmMedium);
+    validateParameterAndAddToData(segmentInfo.utmCampaign, FirestoreKeys.utmCampaign);
 
     await segmentDocument.set(data);
 
@@ -173,6 +164,43 @@ class FirestoreClient {
     return null;
   }
 
+  static Future<VisitorInfo> _visitorInfoFromDocument(
+    QueryDocumentSnapshot<Map<String, dynamic>> visitorDocument,
+    String visitorId
+  ) async {
+    List<VisitorSessionInfo> sessions = [];
+
+    final sessionsSnapshot = await visitorDocument
+      .reference.collection(FirestoreKeys.sessions).get();
+    for (final sessionDocument in sessionsSnapshot.docs) {
+      final sessionId = sessionDocument.id;
+      final sessionData = sessionDocument.data();
+      final sessionInfo = _sessionInfoFromSessionData(sessionData, sessionId);
+
+      sessions.add(sessionInfo);
+    }
+
+    return VisitorInfo(id: visitorId, sessions: sessions);
+  }
+
+  static VisitorSessionInfo _sessionInfoFromSessionData(
+    Map<String, dynamic> sessionData,
+    String sessionId
+  ) {
+    final walletId = tryGetValueFromMap<String>(sessionData, FirestoreKeys.walletId);
+    final utmSource = tryGetValueFromMap<String>(sessionData, FirestoreKeys.utmSource);
+    final utmMedium = tryGetValueFromMap<String>(sessionData, FirestoreKeys.utmMedium);
+    final utmCampaign = tryGetValueFromMap<String>(sessionData, FirestoreKeys.utmCampaign);
+
+    return VisitorSessionInfo(
+      id: sessionId,
+      walletId: walletId,
+      utmSource: utmSource,
+      utmMedium: utmMedium,
+      utmCampaign: utmCampaign
+    );
+  }
+
   static SegmentInfo? _segmentInfoFromDocumentData(
     Map<String, dynamic> segmentDocumentData,
     String segmentId
@@ -184,6 +212,9 @@ class FirestoreClient {
     final transactionsCountPeriodInDays = tryGetValueFromMap<int>(segmentDocumentData, FirestoreKeys.transactionsCountPeriodInDays);
     final minTransactionsCountPerPeriod = tryGetValueFromMap<int>(segmentDocumentData, FirestoreKeys.minTransactionsCountPerPeriod);
     final maxTransactionsCountPerPeriod = tryGetValueFromMap<int>(segmentDocumentData, FirestoreKeys.maxTransactionsCountPerPeriod);
+    final utmSource = tryGetValueFromMap<String>(segmentDocumentData, FirestoreKeys.utmSource);
+    final utmMedium = tryGetValueFromMap<String>(segmentDocumentData, FirestoreKeys.utmMedium);
+    final utmCampaign = tryGetValueFromMap<String>(segmentDocumentData, FirestoreKeys.utmCampaign);
 
     if (title != null && description != null) {
       return SegmentInfo(
@@ -194,7 +225,10 @@ class FirestoreClient {
         maxWalletAgeInDays: maxWalletAgeInDays,
         transactionsCountPeriodInDays: transactionsCountPeriodInDays,
         minTransactionsCountPerPeriod: minTransactionsCountPerPeriod,
-        maxTransactionsCountPerPeriod: maxTransactionsCountPerPeriod
+        maxTransactionsCountPerPeriod: maxTransactionsCountPerPeriod,
+        utmSource: utmSource,
+        utmMedium: utmMedium,
+        utmCampaign: utmCampaign
       );
     }
 

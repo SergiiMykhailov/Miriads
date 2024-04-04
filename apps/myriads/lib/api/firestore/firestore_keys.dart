@@ -12,6 +12,9 @@ class FirestoreKeys {
   static const String title = 'title';
   static const String transactionsCountPeriodInDays = 'transactions_count_period_in_days';
   static const String users = 'users';
+  static const String utmSource = 'utm_source';
+  static const String utmMedium = 'utm_medium';
+  static const String utmCampaign = 'utm_campaign';
   static const String visitors = 'visitors';
   static const String walletId = 'wallet_id';
 

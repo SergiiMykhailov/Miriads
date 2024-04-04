@@ -99,6 +99,26 @@ class _CreateSegmentWidgetState extends State<CreateSegmentWidget> {
               Expanded(child: _maxTransactionsCountPerPeriodInput),
             ]
           ),
+          const SizedBox(height: 56),
+          const Text(
+            'Google Analytics:',
+            style: TextStyle(
+              color: AppTheme.textColorBody,
+              fontSize: 16
+            )
+          ),
+          const SizedBox(height: 12),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Expanded(child: _utmSourceInput),
+              const SizedBox(width: 64),
+              Expanded(child: _utmMediumInput),
+              const SizedBox(width: 64),
+              Expanded(child: _utmCampaignInput),
+            ]
+          ),
           const SizedBox(height: 96),
           Row(
             children: [
@@ -164,7 +184,10 @@ class _CreateSegmentWidgetState extends State<CreateSegmentWidget> {
       maxWalletAgeInDays: maxWalletAgeInDays,
       transactionsCountPeriodInDays: transactionsCountPeriod,
       minTransactionsCountPerPeriod: minTransactionsCountPerPeriod,
-      maxTransactionsCountPerPeriod: maxTransactionsCountPerPeriod
+      maxTransactionsCountPerPeriod: maxTransactionsCountPerPeriod,
+      utmSource: _utmSourceInput.text,
+      utmMedium: _utmMediumInput.text,
+      utmCampaign: _utmCampaignInput.text
     );
 
     await FirestoreClient.registerSegment(
@@ -193,5 +216,8 @@ class _CreateSegmentWidgetState extends State<CreateSegmentWidget> {
   final _transactionsCountPeriodInput = TextInputField(placeholder: 'Transactions count period (days)');
   final _minTransactionsCountPerPeriodInput = TextInputField(placeholder: 'Min transactions count');
   final _maxTransactionsCountPerPeriodInput = TextInputField(placeholder: 'Max transactions count');
+  final _utmSourceInput = TextInputField(placeholder: 'UTM Source');
+  final _utmMediumInput = TextInputField(placeholder: 'UTM Medium');
+  final _utmCampaignInput = TextInputField(placeholder: 'UTM Campaign');
   bool _isCreating = false;
 }
