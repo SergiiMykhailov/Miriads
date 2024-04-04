@@ -1,5 +1,8 @@
 import 'package:myriads/api/firestore/firestore_client.dart';
 import 'package:myriads/api/moralis/moralis_client.dart';
+import 'package:myriads/models/segment_info.dart';
+import 'package:myriads/models/visitor_info.dart';
+import 'package:myriads/models/wallet_info.dart';
 import 'package:myriads/ui/theme/app_theme.dart';
 import 'package:myriads/ui/widgets/copyable_text_widget.dart';
 import 'package:myriads/utils/delayed_utils.dart';
@@ -155,13 +158,69 @@ class _SegmentDetailsWidgetState extends State<SegmentDetailsWidget> {
     required String segmentId
   }) async {
     _loadedSegmentItems = null;
-    String segmentParameters = '';
     List<_SegmentItem> items = [];
 
     final segment = await FirestoreClient.loadSegment(domain: domain, segmentId: segmentId);
     if (segment == null) {
       return;
     }
+
+    final segmentParameters = _buildSegmentParameters(segment);
+
+    final domainVisitors = await FirestoreClient.loadAllDomainVisitors(domain);
+
+    // Collect all wallets of all visitors into single list
+    // so we load all balances and transactions per single batch.
+    // After this we need to match balances and transactions back to visitors.
+    final allVisitorsWallets = _extractAllWalletsFromVisitors(domainVisitors);
+    final allVisitorsWalletsBalances = await MoralisClient.loadEthereumERC20WalletsBalance(walletsAddresses: allVisitorsWallets.toList());
+    final allVisitorsWalletsTransactions = await MoralisClient.loadEthereumERC20WalletsTransactions(walletsAddresses: allVisitorsWallets.toList());
+
+    DateTime now = DateTime.now();
+    DateTime startOfDay = DateTime(now.year, now.month, now.day);
+    int startOfCurrentDayTimestamp = startOfDay.millisecondsSinceEpoch;
+
+    for (final walletBalance in allVisitorsWalletsBalances) {
+      final walletVisitor = _findVisitorOfWallet(walletBalance.address, domainVisitors);
+      final visitorTransactionsInfo = _findVisitorTransactions(walletBalance.address, allVisitorsWalletsTransactions);
+
+      if (!_checkSegmentWalletAge(segment, visitorTransactionsInfo, startOfCurrentDayTimestamp)) {
+        continue;
+      }
+
+      final transactionsPerPeriodCount = _calculateTransactionsPerPeriodCount(
+        segment,
+        visitorTransactionsInfo,
+        startOfCurrentDayTimestamp
+      );
+      if (transactionsPerPeriodCount == null) {
+        continue;
+      }
+
+      if (!_checkGoogleAnalyticsMarkers(segment, walletVisitor)) {
+        continue;
+      }
+
+      items.add(
+        _SegmentItem(
+          userId: walletVisitor.id,
+          walletAddress: walletBalance.address,
+          walletBalance: walletBalance.nativeBalance,
+          transactionsCount: transactionsPerPeriodCount
+        )
+      );
+    }
+
+    updateState(() {
+      _title = segment.title;
+      _description = segment.description;
+      _loadedSegmentItems = items;
+      _segmentParameters = segmentParameters;
+    });
+  }
+
+  static String _buildSegmentParameters(SegmentInfo segment) {
+    String segmentParameters = '';
 
     segmentParameters += segment.minWalletAgeInDays != null
       ? 'wallet age from: \'${segment.minWalletAgeInDays}\''
@@ -188,132 +247,140 @@ class _SegmentDetailsWidgetState extends State<SegmentDetailsWidget> {
       ? ', UTM Campaign: \'${segment.utmCampaign}\''
       : ', UTM Campaign: Any';
 
-    final domainVisitors = await FirestoreClient.loadAllDomainVisitors(domain);
+    return segmentParameters;
+  }
 
-    // Collect all wallets of all visitors into single list
-    // so we load all balances and transactions per single batch.
-    // After this we need to match balances and transactions back to visitors.
-    var allVisitorsWallets = <String>{};
-    for (final domainVisitor in domainVisitors) {
+  static Set<String> _extractAllWalletsFromVisitors(List<VisitorInfo> visitors) {
+    Set<String> result = {};
+
+    for (final domainVisitor in visitors) {
       for (final sessionInfo in domainVisitor.sessions) {
         if (sessionInfo.walletId != null) {
-          allVisitorsWallets.add(sessionInfo.walletId!);
+          result.add(sessionInfo.walletId!);
         }
       }
     }
 
-    final allVisitorsWalletsBalances = await MoralisClient.loadEthereumERC20WalletsBalance(walletsAddresses: allVisitorsWallets.toList());
-    final allVisitorsWalletsTransactions = await MoralisClient.loadEthereumERC20WalletsTransactions(walletsAddresses: allVisitorsWallets.toList());
+    return result;
+  }
 
-    DateTime now = DateTime.now();
-    DateTime startOfDay = DateTime(now.year, now.month, now.day);
-    int startOfCurrentDayTimestamp = startOfDay.millisecondsSinceEpoch;
-
-    for (final walletBalance in allVisitorsWalletsBalances) {
-      final walletVisitor = domainVisitors.firstWhere((visitor) {
-        for (final sessionInfo in visitor.sessions) {
-          if (sessionInfo.walletId != null &&
-              sessionInfo.walletId!.toLowerCase() == walletBalance.address.toLowerCase()) {
-            return true;
-          }
-        }
-
-        return false;
-      });
-
-      final visitorTransactionsInfo = allVisitorsWalletsTransactions.firstWhereOrNull(
-          (transaction) => transaction.address.toLowerCase() == walletBalance.address.toLowerCase()
-      );
-
-      // Transactions come in last-to-first order so the last one is the oldest one
-      final firstTransaction = visitorTransactionsInfo?.transactions.last;
-
-      if (segment.minWalletAgeInDays != null) {
-        if (firstTransaction == null) {
-          continue;
-        }
-
-        final latestFirstTransactionTimestamp =
-          startOfCurrentDayTimestamp - segment.minWalletAgeInDays! * _Constants.millisecondsPerDay;
-
-        if (firstTransaction.timestamp > latestFirstTransactionTimestamp) {
-          continue;
+  static VisitorInfo _findVisitorOfWallet(String walletId, List<VisitorInfo> visitors) {
+    final result = visitors.firstWhere((visitor) {
+      for (final sessionInfo in visitor.sessions) {
+        if (sessionInfo.walletId != null &&
+          sessionInfo.walletId!.toLowerCase() == walletId.toLowerCase()) {
+          return true;
         }
       }
 
-      if (segment.maxWalletAgeInDays != null) {
-        if (firstTransaction == null) {
-          continue;
-        }
-
-        final earliestFirstTransactionTimestamp =
-          startOfCurrentDayTimestamp - segment.maxWalletAgeInDays! * _Constants.millisecondsPerDay;
-
-        if (firstTransaction.timestamp < earliestFirstTransactionTimestamp) {
-          continue;
-        }
-      }
-
-      int transactionsPerPeriodCount = visitorTransactionsInfo != null
-        ? visitorTransactionsInfo.transactions.length
-        : 0;
-
-      if (segment.transactionsCountPeriodInDays != null) {
-        if (visitorTransactionsInfo == null) {
-          continue;
-        }
-
-        final periodStartTimestamp = startOfCurrentDayTimestamp - _Constants.millisecondsPerDay * segment.transactionsCountPeriodInDays!;
-        transactionsPerPeriodCount = 0;
-        for (final currentTransaction in visitorTransactionsInfo.transactions) {
-          if (currentTransaction.timestamp > periodStartTimestamp) {
-            transactionsPerPeriodCount++;
-          }
-        }
-
-        if (segment.minTransactionsCountPerPeriod != null && transactionsPerPeriodCount < segment.minTransactionsCountPerPeriod! ||
-            segment.maxTransactionsCountPerPeriod != null && transactionsPerPeriodCount > segment.maxTransactionsCountPerPeriod!) {
-          continue;
-        }
-      }
-
-      if (segment.utmSource != null) {
-        final sessionWithUtmSource = walletVisitor.sessions.firstWhereOrNull((session) => session.utmSource == segment.utmSource!);
-        if (sessionWithUtmSource == null) {
-          continue;
-        }
-      }
-
-      if (segment.utmMedium != null) {
-        final sessionWithUtmSource = walletVisitor.sessions.firstWhereOrNull((session) => session.utmMedium == segment.utmMedium!);
-        if (sessionWithUtmSource == null) {
-          continue;
-        }
-      }
-
-      if (segment.utmCampaign != null) {
-        final sessionWithUtmSource = walletVisitor.sessions.firstWhereOrNull((session) => session.utmCampaign == segment.utmCampaign!);
-        if (sessionWithUtmSource == null) {
-          continue;
-        }
-      }
-
-      items.add(
-        _SegmentItem(
-          userId: walletVisitor.id,
-          walletAddress: walletBalance.address,
-          walletBalance: walletBalance.nativeBalance,
-          transactionsCount: transactionsPerPeriodCount
-        )
-      );
-    }
-
-    updateState(() {
-      _title = segment.title;
-      _description = segment.description;
-      _loadedSegmentItems = items;
-      _segmentParameters = segmentParameters;
+      return false;
     });
+
+    return result;
+  }
+
+  static WalletTransactionsInfo? _findVisitorTransactions(String walletId, List<WalletTransactionsInfo> walletsTransactions) {
+    final result = walletsTransactions.firstWhereOrNull(
+        (walletTransactionsInfo) => walletTransactionsInfo.address.toLowerCase() == walletId.toLowerCase()
+    );
+
+    return result;
+  }
+
+  static bool _checkSegmentWalletAge(
+    SegmentInfo segment,
+    WalletTransactionsInfo? visitorTransactionsInfo,
+    int startOfCurrentDayTimestamp
+  ) {
+    // Transactions come in last-to-first order so the last one is the oldest one
+    final firstTransaction = visitorTransactionsInfo?.transactions.last;
+
+    if (segment.minWalletAgeInDays != null) {
+      if (firstTransaction == null) {
+        return false;
+      }
+
+      final latestFirstTransactionTimestamp =
+        startOfCurrentDayTimestamp - segment.minWalletAgeInDays! * _Constants.millisecondsPerDay;
+
+      if (firstTransaction.timestamp > latestFirstTransactionTimestamp) {
+        return false;
+      }
+    }
+
+    if (segment.maxWalletAgeInDays != null) {
+      if (firstTransaction == null) {
+        return false;
+      }
+
+      final earliestFirstTransactionTimestamp =
+        startOfCurrentDayTimestamp - segment.maxWalletAgeInDays! * _Constants.millisecondsPerDay;
+
+      if (firstTransaction.timestamp < earliestFirstTransactionTimestamp) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  static int? _calculateTransactionsPerPeriodCount(
+    SegmentInfo segment,
+    WalletTransactionsInfo? visitorTransactionsInfo,
+    int startOfCurrentDayTimestamp
+  ) {
+    int transactionsPerPeriodCount = visitorTransactionsInfo != null
+      ? visitorTransactionsInfo.transactions.length
+      : 0;
+
+    if (segment.transactionsCountPeriodInDays != null) {
+      if (visitorTransactionsInfo == null) {
+        return null;
+      }
+
+      final periodStartTimestamp = startOfCurrentDayTimestamp - _Constants.millisecondsPerDay * segment.transactionsCountPeriodInDays!;
+      transactionsPerPeriodCount = 0;
+      for (final currentTransaction in visitorTransactionsInfo.transactions) {
+        if (currentTransaction.timestamp > periodStartTimestamp) {
+          transactionsPerPeriodCount++;
+        }
+      }
+
+      if (segment.minTransactionsCountPerPeriod != null && transactionsPerPeriodCount < segment.minTransactionsCountPerPeriod! ||
+        segment.maxTransactionsCountPerPeriod != null && transactionsPerPeriodCount > segment.maxTransactionsCountPerPeriod!) {
+        return null;
+      }
+    }
+
+    return transactionsPerPeriodCount;
+  }
+
+  static bool _checkGoogleAnalyticsMarkers(
+    SegmentInfo segment,
+    VisitorInfo visitor
+  ) {
+    if (segment.utmSource != null) {
+      final sessionWithUtmSource = visitor.sessions.firstWhereOrNull((session) => session.utmSource == segment.utmSource!);
+      if (sessionWithUtmSource == null) {
+        return false;
+      }
+    }
+
+    if (segment.utmMedium != null) {
+      final sessionWithUtmSource = visitor.sessions.firstWhereOrNull((session) => session.utmMedium == segment.utmMedium!);
+      if (sessionWithUtmSource == null) {
+        return false;
+      }
+    }
+
+    if (segment.utmCampaign != null) {
+      final sessionWithUtmSource = visitor.sessions.firstWhereOrNull((session) => session.utmCampaign == segment.utmCampaign!);
+      if (sessionWithUtmSource == null) {
+        return false;
+      }
+    }
+
+    return true;
   }
 
   // Internal fields
