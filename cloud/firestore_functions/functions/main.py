@@ -43,6 +43,31 @@ def record_entry(request: https_fn.Request) -> https_fn.Response:
         .collection("sessions") \
         .document(session_id) \
         .set({"wallet_id": wallet_id})
+    
+    utm_source = request.args.get("utm_source")
+    utm_medium = request.args.get("utm_medium")
+    utm_campaign = request.args.get("utm_campaign")
+
+    if utm_source is None:
+        utm_source = "none"
+    if utm_medium is None:
+        utm_medium = "none"
+    if utm_campaign is None:
+        utm_campaign = "none"
+
+    utm_data = {
+        "utm_source": utm_source,
+        "utm_medium": utm_medium,
+        "utm_campaign": utm_campaign
+    }
+
+    if utm_source is not None:
+        firestore_client \
+        .collection("domains") \
+        .document(domain) \
+        .collection("visitors") \
+        .document(user_id) \
+        .set({"utm_data": utm_data})
 
     # Send back a message that we've successfully written the message
     return https_fn.Response("Record added.")
