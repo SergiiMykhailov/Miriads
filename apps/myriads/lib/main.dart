@@ -1,7 +1,15 @@
-import 'package:flutter/cupertino.dart';
+import 'package:myriads/api/firestore/firestore_utils.dart';
 import 'package:myriads/ui/screens/home_screen.dart';
 
-void main() {
+import 'package:firebase_auth/firebase_auth.dart' hide EmailAuthProvider;
+import 'package:firebase_ui_auth/firebase_ui_auth.dart';
+import 'package:firebase_ui_oauth_google/firebase_ui_oauth_google.dart';
+
+import 'package:flutter/cupertino.dart';
+
+void main() async {
+  await FirestoreUtils.initializedSharedInstance();
+
   runApp(const MyriadsApp());
 }
 
@@ -11,9 +19,9 @@ class MyriadsApp extends StatelessWidget {
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-    return const CupertinoApp(
+    return CupertinoApp(
       title: "Myriads",
-      theme: CupertinoThemeData(
+      theme: const CupertinoThemeData(
         textTheme: CupertinoTextThemeData(
           textStyle: TextStyle(fontFamily: 'Montserrat'),
           actionTextStyle: TextStyle(fontFamily: 'Montserrat'),
@@ -26,7 +34,27 @@ class MyriadsApp extends StatelessWidget {
         )
       ),
       debugShowCheckedModeBanner: false,
-      home: HomeScreen(),
+      home: StreamBuilder<User?>(
+        stream: FirebaseAuth.instance.authStateChanges(),
+        builder: (context, snapshot) {
+          final userEmail = snapshot.data?.email;
+
+          if (userEmail == null) {
+            return SignInScreen(
+              showAuthActionSwitch: false,
+              providers: [
+                GoogleProvider(
+                  clientId: "26798202385-ge52o1qjr6g2mm0dmdgc7hrrp2e1da8c.apps.googleusercontent.com")
+              ],
+              subtitleBuilder: (context, action) {
+                return Image.asset('lib/resources/images/logo_light.jpg');
+              },
+            );
+          }
+
+          return HomeScreen(userEmail: userEmail);
+        },
+      ),
     );
   }
 }

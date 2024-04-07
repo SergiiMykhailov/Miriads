@@ -2,7 +2,7 @@ extension StringExtensions on String {
 
   // Works only with single character. Otherwise return source string.
   String trimTrailingCharacter(String trailingCharacter) {
-    if (this.isEmpty || trailingCharacter.length != 1) {
+    if (isEmpty || trailingCharacter.length != 1) {
       return this;
     }
 

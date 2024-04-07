@@ -9,6 +9,15 @@
     google_analytics_user_id = google_analytics_user_id.replace(/\./g, '_');
     google_analytics_user_id = 'ga_' + google_analytics_user_id;
     console.log("[MYRIADS] - Recording binding: ", wallet_id, google_analytics_user_id, current_domain);
+
+    var search_params = new URLSearchParams(window.location.search);
+    var utm_source = search_params.get('utm_source');
+    var utm_medium = search_params.get('utm_medium');
+    var utm_campaign = search_params.get('utm_campaign');
+
+    console.log('[MYRIADS] - UTM Source:', utm_source);
+    console.log('[MYRIADS] - UTM Medium:', utm_medium);
+    console.log('[MYRIADS] - UTM Campaign:', utm_campaign);
     
     var current_session_id = Date.now().toString();
 
@@ -16,7 +25,10 @@
       + 'user_id=' + google_analytics_user_id 
       + '&wallet_id=' + wallet_id 
       + '&domain=' + current_domain 
-      + '&session_id=timestamp_' + current_session_id;
+      + '&session_id=timestamp_' + current_session_id
+      + '&utm_source=' + utm_source
+      + '&utm_medium=' + utm_medium
+      + '&utm_campaign=' + utm_campaign;
     console.log("[MYRIADS] - Executing request: ", request);
 
     fetch(request, {

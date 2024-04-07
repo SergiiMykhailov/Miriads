@@ -1,8 +1,12 @@
-import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
-import 'package:myriads/firestore/firestore_client.dart';
-import 'package:myriads/models/user_wallets_info.dart';
+import 'package:myriads/api/firestore/firestore_client.dart';
+import 'package:myriads/ui/theme/app_theme.dart';
+import 'package:myriads/ui/widgets/copyable_text_widget.dart';
+import 'package:myriads/utils/delayed_utils.dart';
+import 'package:myriads/utils/widget_extensions.dart';
 
+import 'package:flutter/cupertino.dart';
+
+// ignore: must_be_immutable
 class WalletsListWidget extends StatefulWidget {
 
   // Public methods and properties
@@ -10,31 +14,47 @@ class WalletsListWidget extends StatefulWidget {
   WalletsListWidget({super.key});
 
   void reload(String domain) {
-    _state.reload(domain);
+    _domain = domain;
+
+    DelayedUtils.waitForConditionAndExecute(
+      condition: () { return _state != null; },
+      callback: () { _state!.reload(_domain); }
+    );
   }
 
   // Overridden methods
 
   @override
+  // ignore: no_logic_in_create_state
   State<StatefulWidget> createState() {
-    return _state;
+    _state = _WalletsListWidgetState(domain: _domain);
+    return _state!;
   }
 
   // Internal fields
 
-  final _state = _WalletsListWidgetState();
-
+  _WalletsListWidgetState? _state;
+  String _domain = '';
 }
 
 class _WalletsListWidgetState extends State<WalletsListWidget> {
 
   // Public methods and properties
 
+  _WalletsListWidgetState({
+    required String domain
+  })
+    : _domain = domain {
+    if (_domain != null && _domain!.isNotEmpty) {
+      reload(_domain!);
+    }
+  }
+
   void reload(String domain) {
-    setState(() {
+    updateState(() {
       _domain = domain;
       _isLoading = true;
-      _loadedWallets = [];
+      _loadedVisitorIdToWalletsListMap = {};
 
       _reloadWallets();
     });
@@ -45,7 +65,7 @@ class _WalletsListWidgetState extends State<WalletsListWidget> {
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return const CupertinoActivityIndicator();
+      return const Center(child: CupertinoActivityIndicator(color: AppTheme.textColorBody));
     }
 
     return _buildWalletsList();
@@ -56,10 +76,13 @@ class _WalletsListWidgetState extends State<WalletsListWidget> {
   Widget _buildWalletsList() {
     var walletsText = '';
 
-    for (final userWalletsInfo in _loadedWallets) {
-      final currentUserWalletsText = userWalletsInfo.wallets.join(', ');
+    for (final visitorWalletsInfo in _loadedVisitorIdToWalletsListMap.entries) {
+      final visitorId = visitorWalletsInfo.key;
+      final visitorWallets = visitorWalletsInfo.value;
 
-      var adjustedUserId = userWalletsInfo.userId;
+      final currentUserWalletsText = visitorWallets.join(', ');
+
+      var adjustedUserId = visitorId;
       if (adjustedUserId.startsWith('ga_')) {
         adjustedUserId = adjustedUserId.substring(3);
       }
@@ -68,20 +91,7 @@ class _WalletsListWidgetState extends State<WalletsListWidget> {
       walletsText += '$adjustedUserId, $currentUserWalletsText\n';
     }
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-      child: CupertinoTextField(
-        controller: TextEditingController(text: walletsText),
-        readOnly: true,
-        minLines: 1,
-        maxLines: 100000,
-        decoration: BoxDecoration(
-          color: CupertinoColors.systemGrey6,
-          border: Border.all(color: CupertinoColors.systemGrey5),
-          borderRadius: BorderRadius.circular(12.0),
-        ),
-      )
-    );
+    return CopyableTextWidget(title: '', text: walletsText);
   }
 
   void _reloadWallets() async {
@@ -89,11 +99,24 @@ class _WalletsListWidgetState extends State<WalletsListWidget> {
       return;
     }
 
-    final loadedWallets = await FirestoreClient.loadAllUsersWallets(_domain!);
+    final domainVisitors = await FirestoreClient.loadAllDomainVisitors(_domain!);
+    Map<String, Set<String>> visitorIdToWalletsListMap = {};
 
-    setState(() {
+    for (final domainVisitor in domainVisitors) {
+      Set<String> visitorWallets = {};
+
+      for (final visitorSession in domainVisitor.sessions) {
+        if (visitorSession.walletId != null) {
+          visitorWallets.add(visitorSession.walletId!);
+        }
+      }
+
+      visitorIdToWalletsListMap[domainVisitor.id] = visitorWallets;
+    }
+
+    updateState(() {
       _isLoading = false;
-      _loadedWallets = loadedWallets;
+      _loadedVisitorIdToWalletsListMap = visitorIdToWalletsListMap;
     });
   }
 
@@ -101,6 +124,6 @@ class _WalletsListWidgetState extends State<WalletsListWidget> {
 
   String? _domain;
   bool _isLoading = false;
-  List<UserWalletsInfo> _loadedWallets = [];
+  Map<String, Set<String>> _loadedVisitorIdToWalletsListMap = {};
 
 }

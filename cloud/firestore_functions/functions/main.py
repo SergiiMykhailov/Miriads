@@ -34,6 +34,18 @@ def record_entry(request: https_fn.Request) -> https_fn.Response:
         .document(user_id) \
         .set({"updated_at": current_timestamp})
 
+    session_data = {"wallet_id": wallet_id}
+    utm_source = request.args.get("utm_source")
+    utm_medium = request.args.get("utm_medium")
+    utm_campaign = request.args.get("utm_campaign")
+
+    if utm_source is not None:
+        session_data["utm_source"] = utm_source
+    if utm_medium is not None:
+        session_data["utm_medium"] = utm_medium
+    if utm_campaign is not None:
+        session_data["utm_campaign"] = utm_campaign
+
     # Push the new message into Cloud Firestore using the Firebase Admin SDK.
     firestore_client \
         .collection("domains") \
@@ -42,7 +54,7 @@ def record_entry(request: https_fn.Request) -> https_fn.Response:
         .document(user_id) \
         .collection("sessions") \
         .document(session_id) \
-        .set({"wallet_id": wallet_id})
+        .set(session_data)
 
     # Send back a message that we've successfully written the message
     return https_fn.Response("Record added.")
