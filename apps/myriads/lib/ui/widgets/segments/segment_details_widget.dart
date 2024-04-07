@@ -359,21 +359,21 @@ class _SegmentDetailsWidgetState extends State<SegmentDetailsWidget> {
     SegmentInfo segment,
     VisitorInfo visitor
   ) {
-    if (segment.utmSource != null) {
+    if (segment.utmSource != null && segment.utmSource!.isNotEmpty) {
       final sessionWithUtmSource = visitor.sessions.firstWhereOrNull((session) => session.utmSource == segment.utmSource!);
       if (sessionWithUtmSource == null) {
         return false;
       }
     }
 
-    if (segment.utmMedium != null) {
+    if (segment.utmMedium != null && segment.utmMedium!.isNotEmpty) {
       final sessionWithUtmSource = visitor.sessions.firstWhereOrNull((session) => session.utmMedium == segment.utmMedium!);
       if (sessionWithUtmSource == null) {
         return false;
       }
     }
 
-    if (segment.utmCampaign != null) {
+    if (segment.utmCampaign != null && segment.utmCampaign!.isNotEmpty) {
       final sessionWithUtmSource = visitor.sessions.firstWhereOrNull((session) => session.utmCampaign == segment.utmCampaign!);
       if (sessionWithUtmSource == null) {
         return false;

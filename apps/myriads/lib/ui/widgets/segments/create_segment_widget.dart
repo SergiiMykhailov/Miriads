@@ -176,6 +176,12 @@ class _CreateSegmentWidgetState extends State<CreateSegmentWidget> {
     int? transactionsCountPeriod = int.tryParse(_transactionsCountPeriodInput.text);
     int? minTransactionsCountPerPeriod = int.tryParse(_minTransactionsCountPerPeriodInput.text);
     int? maxTransactionsCountPerPeriod = int.tryParse(_maxTransactionsCountPerPeriodInput.text);
+    String? utmSource = _utmSourceInput.text;
+    utmSource = utmSource.isNotEmpty ? utmSource : null;
+    String? utmMedium = _utmMediumInput.text;
+    utmMedium = utmMedium.isNotEmpty ? utmMedium : null;
+    String? utmCampaign = _utmCampaignInput.text;
+    utmCampaign = utmCampaign.isNotEmpty ? utmCampaign : null;
 
     final segmentInfo = SegmentInfo(
       title: title,
@@ -185,9 +191,9 @@ class _CreateSegmentWidgetState extends State<CreateSegmentWidget> {
       transactionsCountPeriodInDays: transactionsCountPeriod,
       minTransactionsCountPerPeriod: minTransactionsCountPerPeriod,
       maxTransactionsCountPerPeriod: maxTransactionsCountPerPeriod,
-      utmSource: _utmSourceInput.text,
-      utmMedium: _utmMediumInput.text,
-      utmCampaign: _utmCampaignInput.text
+      utmSource: utmSource,
+      utmMedium: utmMedium,
+      utmCampaign: utmCampaign
     );
 
     await FirestoreClient.registerSegment(
