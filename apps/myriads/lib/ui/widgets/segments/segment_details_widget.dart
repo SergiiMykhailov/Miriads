@@ -335,23 +335,23 @@ class _SegmentDetailsWidgetState extends State<SegmentDetailsWidget> {
       ? visitorTransactionsInfo.transactions.length
       : 0;
 
-    if (segment.transactionsCountPeriodInDays != null) {
-      if (visitorTransactionsInfo == null) {
-        return null;
-      }
+    final transactionsCountPeriodInDays = segment.transactionsCountPeriodInDays ?? _Constants.defaultTransactionsCountPeriodInDays;
 
-      final periodStartTimestamp = startOfCurrentDayTimestamp - _Constants.millisecondsPerDay * segment.transactionsCountPeriodInDays!;
-      transactionsPerPeriodCount = 0;
-      for (final currentTransaction in visitorTransactionsInfo.transactions) {
-        if (currentTransaction.timestamp > periodStartTimestamp) {
-          transactionsPerPeriodCount++;
-        }
-      }
+    if (visitorTransactionsInfo == null) {
+      return null;
+    }
 
-      if (segment.minTransactionsCountPerPeriod != null && transactionsPerPeriodCount < segment.minTransactionsCountPerPeriod! ||
-          segment.maxTransactionsCountPerPeriod != null && transactionsPerPeriodCount > segment.maxTransactionsCountPerPeriod!) {
-        return null;
+    final periodStartTimestamp = startOfCurrentDayTimestamp - _Constants.millisecondsPerDay * transactionsCountPeriodInDays!;
+    transactionsPerPeriodCount = 0;
+    for (final currentTransaction in visitorTransactionsInfo.transactions) {
+      if (currentTransaction.timestamp > periodStartTimestamp) {
+        transactionsPerPeriodCount++;
       }
+    }
+
+    if (segment.minTransactionsCountPerPeriod != null && transactionsPerPeriodCount < segment.minTransactionsCountPerPeriod! ||
+        segment.maxTransactionsCountPerPeriod != null && transactionsPerPeriodCount > segment.maxTransactionsCountPerPeriod!) {
+      return null;
     }
 
     return transactionsPerPeriodCount;
@@ -416,5 +416,6 @@ class _SegmentItem {
 class _Constants {
 
   static const int millisecondsPerDay = 60 * 60 * 24 * 1000;
+  static const int defaultTransactionsCountPeriodInDays = 1000000; // Include all transactions
 
 }
