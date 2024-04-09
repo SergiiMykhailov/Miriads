@@ -293,8 +293,8 @@ class _SegmentDetailsWidgetState extends State<SegmentDetailsWidget> {
     int startOfCurrentDayTimestamp
   ) {
     // Transactions come in last-to-first order so the last one is the oldest one
-    final firstTransaction = visitorTransactionsInfo != null && visitorTransactionsInfo!.transactions.isNotEmpty
-      ? visitorTransactionsInfo?.transactions.last
+    final firstTransaction = visitorTransactionsInfo != null && visitorTransactionsInfo.transactions.isNotEmpty
+      ? visitorTransactionsInfo.transactions.last
       : null;
 
     if (segment.minWalletAgeInDays != null && segment.minWalletAgeInDays! > 0) {
