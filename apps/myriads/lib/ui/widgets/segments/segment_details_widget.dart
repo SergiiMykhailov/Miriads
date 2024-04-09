@@ -188,7 +188,7 @@ class _SegmentDetailsWidgetState extends State<SegmentDetailsWidget> {
         continue;
       }
 
-      final transactionsPerPeriodCount = _calculateTransactionsPerPeriodCount(
+      final transactionsPerPeriodCount = _checkAndCalculateTransactionsPerPeriodCount(
         segment,
         visitorTransactionsInfo,
         startOfCurrentDayTimestamp
@@ -293,11 +293,11 @@ class _SegmentDetailsWidgetState extends State<SegmentDetailsWidget> {
     int startOfCurrentDayTimestamp
   ) {
     // Transactions come in last-to-first order so the last one is the oldest one
-    final firstTransaction = visitorTransactionsInfo != null && visitorTransactionsInfo!.transactions.isNotEmpty
-      ? visitorTransactionsInfo?.transactions.last
+    final firstTransaction = visitorTransactionsInfo != null && visitorTransactionsInfo.transactions.isNotEmpty
+      ? visitorTransactionsInfo.transactions.last
       : null;
 
-    if (segment.minWalletAgeInDays != null) {
+    if (segment.minWalletAgeInDays != null && segment.minWalletAgeInDays! > 0) {
       if (firstTransaction == null) {
         return false;
       }
@@ -310,7 +310,7 @@ class _SegmentDetailsWidgetState extends State<SegmentDetailsWidget> {
       }
     }
 
-    if (segment.maxWalletAgeInDays != null) {
+    if (segment.maxWalletAgeInDays != null && segment.maxWalletAgeInDays! > 0) {
       if (firstTransaction == null) {
         return false;
       }
@@ -326,7 +326,7 @@ class _SegmentDetailsWidgetState extends State<SegmentDetailsWidget> {
     return true;
   }
 
-  static int? _calculateTransactionsPerPeriodCount(
+  static int? _checkAndCalculateTransactionsPerPeriodCount(
     SegmentInfo segment,
     WalletTransactionsInfo? visitorTransactionsInfo,
     int startOfCurrentDayTimestamp
@@ -335,23 +335,23 @@ class _SegmentDetailsWidgetState extends State<SegmentDetailsWidget> {
       ? visitorTransactionsInfo.transactions.length
       : 0;
 
-    if (segment.transactionsCountPeriodInDays != null) {
-      if (visitorTransactionsInfo == null) {
-        return null;
-      }
+    final transactionsCountPeriodInDays = segment.transactionsCountPeriodInDays ?? _Constants.defaultTransactionsCountPeriodInDays;
 
-      final periodStartTimestamp = startOfCurrentDayTimestamp - _Constants.millisecondsPerDay * segment.transactionsCountPeriodInDays!;
-      transactionsPerPeriodCount = 0;
-      for (final currentTransaction in visitorTransactionsInfo.transactions) {
-        if (currentTransaction.timestamp > periodStartTimestamp) {
-          transactionsPerPeriodCount++;
-        }
-      }
+    if (visitorTransactionsInfo == null) {
+      return null;
+    }
 
-      if (segment.minTransactionsCountPerPeriod != null && transactionsPerPeriodCount < segment.minTransactionsCountPerPeriod! ||
+    final periodStartTimestamp = startOfCurrentDayTimestamp - _Constants.millisecondsPerDay * transactionsCountPeriodInDays!;
+    transactionsPerPeriodCount = 0;
+    for (final currentTransaction in visitorTransactionsInfo.transactions) {
+      if (currentTransaction.timestamp > periodStartTimestamp) {
+        transactionsPerPeriodCount++;
+      }
+    }
+
+    if (segment.minTransactionsCountPerPeriod != null && transactionsPerPeriodCount < segment.minTransactionsCountPerPeriod! ||
         segment.maxTransactionsCountPerPeriod != null && transactionsPerPeriodCount > segment.maxTransactionsCountPerPeriod!) {
-        return null;
-      }
+      return null;
     }
 
     return transactionsPerPeriodCount;
@@ -416,5 +416,6 @@ class _SegmentItem {
 class _Constants {
 
   static const int millisecondsPerDay = 60 * 60 * 24 * 1000;
+  static const int defaultTransactionsCountPeriodInDays = 1000000; // Include all transactions
 
 }
