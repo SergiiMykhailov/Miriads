@@ -214,8 +214,8 @@ class _CreateSegmentWidgetState extends State<CreateSegmentWidget> {
       utmSource: utmSource,
       utmMedium: utmMedium,
       utmCampaign: utmCampaign,
-      minPortfolioBalanceInUSDT: minPortfolioBalanceUSDT,
-      maxPortfolioBalanceInUSDT: maxPortfolioBalanceUSDT
+      minPortfolioBalanceInUSD: minPortfolioBalanceUSDT,
+      maxPortfolioBalanceInUSD: maxPortfolioBalanceUSDT
     );
 
     await FirestoreClient.registerSegment(
