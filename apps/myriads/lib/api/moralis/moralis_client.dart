@@ -5,7 +5,7 @@ import 'package:moralis/moralis.dart';
 
 class MoralisClient {
 
-  static Future<List<WalletBalanceInfo>> loadEthereumERC20WalletsBalance({
+  static Future<List<WalletBalanceInfo>> loadWalletsNetWorthInUsd({
     required List<String> walletsAddresses
   }) async {
     final moralisClient = _initializedMoralisInstance();
@@ -13,15 +13,14 @@ class MoralisClient {
     List<WalletBalanceInfo> result = [];
 
     for (final walletAddress in walletsAddresses) {
-      final walletBalance = await moralisClient.evmApi.balance.getNativeBalance(
-        chain: EvmChain.ethereum,
+      final walletBalance = await moralisClient.evmApi.balance.loadWalletNetWorthInUSD(
         address: walletAddress
       );
 
       if (walletBalance != null) {
         result.add(WalletBalanceInfo(
           address: walletAddress,
-          nativeBalance: walletBalance
+          totalNetWorthInUSD: walletBalance
         ));
       }
     }

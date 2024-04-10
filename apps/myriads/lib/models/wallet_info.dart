@@ -3,11 +3,11 @@ class WalletBalanceInfo {
   // Public methods and properties
 
   final String address;
-  final String nativeBalance;
+  final double? totalNetWorthInUSD;
 
   WalletBalanceInfo({
     required this.address,
-    required this.nativeBalance
+    required this.totalNetWorthInUSD
   });
 
 }

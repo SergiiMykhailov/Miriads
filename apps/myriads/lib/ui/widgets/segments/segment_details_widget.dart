@@ -132,7 +132,8 @@ class _SegmentDetailsWidgetState extends State<SegmentDetailsWidget> {
             textAlign: TextAlign.start,
             style: const TextStyle(
               color: AppTheme.textColorBody,
-              fontSize: 10
+              fontSize: 10,
+              height: 2
             ),
           ),
           const SizedBox(height: 36),
@@ -147,7 +148,7 @@ class _SegmentDetailsWidgetState extends State<SegmentDetailsWidget> {
                   ),
                 ),
               )
-            : CopyableTextWidget(title: 'User ID, Wallet Address, Balance (ETH), Transactions Count', text: text)
+            : CopyableTextWidget(title: 'User ID, Wallet Address, Total Net Worth (USD), Transactions Count', text: text)
         ],
       )
     );
@@ -173,7 +174,7 @@ class _SegmentDetailsWidgetState extends State<SegmentDetailsWidget> {
     // so we load all balances and transactions per single batch.
     // After this we need to match balances and transactions back to visitors.
     final allVisitorsWallets = _extractAllWalletsFromVisitors(domainVisitors);
-    final allVisitorsWalletsBalances = await MoralisClient.loadEthereumERC20WalletsBalance(walletsAddresses: allVisitorsWallets.toList());
+    final allVisitorsWalletsBalances = await MoralisClient.loadWalletsNetWorthInUsd(walletsAddresses: allVisitorsWallets.toList());
     final allVisitorsWalletsTransactions = await MoralisClient.loadEthereumERC20WalletsTransactions(walletsAddresses: allVisitorsWallets.toList());
 
     DateTime now = DateTime.now();
@@ -201,11 +202,15 @@ class _SegmentDetailsWidgetState extends State<SegmentDetailsWidget> {
         continue;
       }
 
+      if (!_checkPortfolioBalanceInUSDT(segment, walletBalance)) {
+        continue;
+      }
+
       items.add(
         _SegmentItem(
           userId: walletVisitor.id,
           walletAddress: walletBalance.address,
-          walletBalance: walletBalance.nativeBalance,
+          walletBalance: walletBalance.totalNetWorthInUSD != null ? walletBalance.totalNetWorthInUSD!.toStringAsFixed(2) : 'None',
           transactionsCount: transactionsPerPeriodCount
         )
       );
@@ -246,6 +251,12 @@ class _SegmentDetailsWidgetState extends State<SegmentDetailsWidget> {
     segmentParameters += segment.utmCampaign != null
       ? ', UTM Campaign: \'${segment.utmCampaign}\''
       : ', UTM Campaign: Any';
+    segmentParameters += segment.minPortfolioBalanceInUSD != null
+      ? ', Min portfolio balance (USD): \'${segment.minPortfolioBalanceInUSD!.toStringAsFixed(2)}\''
+      : ', Min portfolio balance (USD): Any';
+    segmentParameters += segment.maxPortfolioBalanceInUSD != null
+      ? ', Max portfolio balance (USD): \'${segment.maxPortfolioBalanceInUSD!.toStringAsFixed(2)}\''
+      : ', Max portfolio balance (USD): Any';
 
     return segmentParameters;
   }
@@ -341,7 +352,7 @@ class _SegmentDetailsWidgetState extends State<SegmentDetailsWidget> {
       return null;
     }
 
-    final periodStartTimestamp = startOfCurrentDayTimestamp - _Constants.millisecondsPerDay * transactionsCountPeriodInDays!;
+    final periodStartTimestamp = startOfCurrentDayTimestamp - _Constants.millisecondsPerDay * transactionsCountPeriodInDays;
     transactionsPerPeriodCount = 0;
     for (final currentTransaction in visitorTransactionsInfo.transactions) {
       if (currentTransaction.timestamp > periodStartTimestamp) {
@@ -380,6 +391,25 @@ class _SegmentDetailsWidgetState extends State<SegmentDetailsWidget> {
       if (sessionWithUtmSource == null) {
         return false;
       }
+    }
+
+    return true;
+  }
+
+  static bool _checkPortfolioBalanceInUSDT(
+    SegmentInfo segment,
+    WalletBalanceInfo walletBalanceInfo
+  ) {
+    final walletBalance = walletBalanceInfo.totalNetWorthInUSD;
+
+    if (segment.minPortfolioBalanceInUSD != null &&
+        (walletBalance == null || walletBalance < segment.minPortfolioBalanceInUSD!)) {
+      return false;
+    }
+
+    if (segment.maxPortfolioBalanceInUSD != null &&
+        (walletBalance == null || walletBalance > segment.maxPortfolioBalanceInUSD!)) {
+      return false;
     }
 
     return true;

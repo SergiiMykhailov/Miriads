@@ -87,6 +87,8 @@ class FirestoreClient {
     validateParameterAndAddToData(segmentInfo.utmSource, FirestoreKeys.utmSource);
     validateParameterAndAddToData(segmentInfo.utmMedium, FirestoreKeys.utmMedium);
     validateParameterAndAddToData(segmentInfo.utmCampaign, FirestoreKeys.utmCampaign);
+    validateParameterAndAddToData(segmentInfo.minPortfolioBalanceInUSD, FirestoreKeys.minPortfolioBalanceInUSDT);
+    validateParameterAndAddToData(segmentInfo.maxPortfolioBalanceInUSD, FirestoreKeys.maxPortfolioBalanceInUSDT);
 
     await segmentDocument.set(data);
 
@@ -215,6 +217,8 @@ class FirestoreClient {
     final utmSource = tryGetValueFromMap<String>(segmentDocumentData, FirestoreKeys.utmSource);
     final utmMedium = tryGetValueFromMap<String>(segmentDocumentData, FirestoreKeys.utmMedium);
     final utmCampaign = tryGetValueFromMap<String>(segmentDocumentData, FirestoreKeys.utmCampaign);
+    final minPortfolioBalanceInUSDT = tryGetValueFromMap<double>(segmentDocumentData, FirestoreKeys.minPortfolioBalanceInUSDT);
+    final maxPortfolioBalanceInUSDT = tryGetValueFromMap<double>(segmentDocumentData, FirestoreKeys.maxPortfolioBalanceInUSDT);
 
     if (title != null && description != null) {
       return SegmentInfo(
@@ -228,7 +232,9 @@ class FirestoreClient {
         maxTransactionsCountPerPeriod: maxTransactionsCountPerPeriod,
         utmSource: utmSource,
         utmMedium: utmMedium,
-        utmCampaign: utmCampaign
+        utmCampaign: utmCampaign,
+        minPortfolioBalanceInUSD: minPortfolioBalanceInUSDT,
+        maxPortfolioBalanceInUSD: maxPortfolioBalanceInUSDT
       );
     }
 
