@@ -87,6 +87,8 @@ class FirestoreClient {
     validateParameterAndAddToData(segmentInfo.utmSource, FirestoreKeys.utmSource);
     validateParameterAndAddToData(segmentInfo.utmMedium, FirestoreKeys.utmMedium);
     validateParameterAndAddToData(segmentInfo.utmCampaign, FirestoreKeys.utmCampaign);
+    validateParameterAndAddToData(segmentInfo.minPortfolioBalanceInUSDT, FirestoreKeys.minPortfolioBalanceInUSDT);
+    validateParameterAndAddToData(segmentInfo.maxPortfolioBalanceInUSDT, FirestoreKeys.maxPortfolioBalanceInUSDT);
 
     await segmentDocument.set(data);
 

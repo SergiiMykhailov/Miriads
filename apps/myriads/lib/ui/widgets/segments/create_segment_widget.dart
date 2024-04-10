@@ -119,6 +119,24 @@ class _CreateSegmentWidgetState extends State<CreateSegmentWidget> {
               Expanded(child: _utmCampaignInput),
             ]
           ),
+          const SizedBox(height: 56),
+          const Text(
+            'Portfolio value (USDT):',
+            style: TextStyle(
+              color: AppTheme.textColorBody,
+              fontSize: 16
+            )
+          ),
+          const SizedBox(height: 12),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Expanded(child: _minPortfolioValue),
+              const SizedBox(width: 64),
+              Expanded(child: _maxPortfolioValue),
+            ]
+          ),
           const SizedBox(height: 96),
           Row(
             children: [
@@ -182,6 +200,8 @@ class _CreateSegmentWidgetState extends State<CreateSegmentWidget> {
     utmMedium = utmMedium.isNotEmpty ? utmMedium : null;
     String? utmCampaign = _utmCampaignInput.text;
     utmCampaign = utmCampaign.isNotEmpty ? utmCampaign : null;
+    double? minPortfolioBalanceUSDT = double.tryParse(_minPortfolioValue.text);
+    double? maxPortfolioBalanceUSDT = double.tryParse(_maxPortfolioValue.text);
 
     final segmentInfo = SegmentInfo(
       title: title,
@@ -193,7 +213,9 @@ class _CreateSegmentWidgetState extends State<CreateSegmentWidget> {
       maxTransactionsCountPerPeriod: maxTransactionsCountPerPeriod,
       utmSource: utmSource,
       utmMedium: utmMedium,
-      utmCampaign: utmCampaign
+      utmCampaign: utmCampaign,
+      minPortfolioBalanceInUSDT: minPortfolioBalanceUSDT,
+      maxPortfolioBalanceInUSDT: maxPortfolioBalanceUSDT
     );
 
     await FirestoreClient.registerSegment(
@@ -225,5 +247,7 @@ class _CreateSegmentWidgetState extends State<CreateSegmentWidget> {
   final _utmSourceInput = TextInputField(placeholder: 'UTM Source');
   final _utmMediumInput = TextInputField(placeholder: 'UTM Medium');
   final _utmCampaignInput = TextInputField(placeholder: 'UTM Campaign');
+  final _minPortfolioValue = TextInputField(placeholder: 'Min balance (USDT)');
+  final _maxPortfolioValue = TextInputField(placeholder: 'Max balance (USDT)');
   bool _isCreating = false;
 }
