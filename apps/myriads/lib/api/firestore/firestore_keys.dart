@@ -17,6 +17,8 @@ class FirestoreKeys {
   static const String utmCampaign = 'utm_campaign';
   static const String visitors = 'visitors';
   static const String walletId = 'wallet_id';
+  static const String minPortfolioBalanceInUSDT = 'min_portfolio_balance_in_usdt';
+  static const String maxPortfolioBalanceInUSDT = 'max_portfolio_balance_in_usdt';
 
   FirestoreKeys._();
 }

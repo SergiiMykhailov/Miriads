@@ -13,6 +13,8 @@ class SegmentInfo {
   final String? utmSource;
   final String? utmMedium;
   final String? utmCampaign;
+  final double? minPortfolioBalanceInUSD;
+  final double? maxPortfolioBalanceInUSD;
 
   SegmentInfo({
     required this.title,
@@ -25,7 +27,9 @@ class SegmentInfo {
     this.maxTransactionsCountPerPeriod,
     this.utmSource,
     this.utmMedium,
-    this.utmCampaign
+    this.utmCampaign,
+    this.minPortfolioBalanceInUSD,
+    this.maxPortfolioBalanceInUSD
   });
 
 }
