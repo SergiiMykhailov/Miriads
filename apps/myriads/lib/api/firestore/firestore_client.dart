@@ -143,6 +143,20 @@ class FirestoreClient {
     return result;
   }
 
+  static Future<void> deleteSegment({
+    required String domain,
+    required String segmentId
+  }) async {
+    final adjustedDomain = _adjustDomain(domain);
+    final firestore = await FirestoreUtils.initializedSharedInstance();
+    await firestore
+      .collection(FirestoreKeys.domains)
+      .doc(adjustedDomain)
+      .collection(FirestoreKeys.segments)
+      .doc(segmentId)
+      .delete();
+  }
+
   // Internal methods
 
   static String _adjustDomain(String domain) {

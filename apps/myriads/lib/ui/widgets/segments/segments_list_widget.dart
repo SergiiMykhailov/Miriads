@@ -7,6 +7,7 @@ import 'package:myriads/utils/widget_extensions.dart';
 import 'package:flutter/cupertino.dart';
 
 typedef SegmentSelectedCallback = void Function(SegmentInfo segmentInfo);
+typedef SegmentDeletedCallback = void Function(SegmentInfo segmentInfo);
 
 // ignore: must_be_immutable
 class SegmentsListWidget extends StatefulWidget {
@@ -16,10 +17,12 @@ class SegmentsListWidget extends StatefulWidget {
   SegmentsListWidget({
     required String domain,
     SegmentSelectedCallback? onSegmentSelected,
+    SegmentDeletedCallback? onSegmentDeleted,
     Key? key
   })
     : _domain = domain
     , _onSegmentSelected = onSegmentSelected
+    , _onSegmentDeleted = onSegmentDeleted
     , super(key: key);
 
   void reload() {
@@ -40,7 +43,8 @@ class SegmentsListWidget extends StatefulWidget {
   State<StatefulWidget> createState() {
     _state = _SegmentsListWidgetState(
       domain: _domain,
-      onSegmentSelected: _onSegmentSelected
+      onSegmentSelected: _onSegmentSelected,
+      onSegmentDeleted: _onSegmentDeleted
     );
     return _state!;
   }
@@ -49,6 +53,7 @@ class SegmentsListWidget extends StatefulWidget {
 
   final String _domain;
   final SegmentSelectedCallback? _onSegmentSelected;
+  final SegmentDeletedCallback? _onSegmentDeleted;
 
   _SegmentsListWidgetState? _state;
 
@@ -60,10 +65,12 @@ class _SegmentsListWidgetState extends State<SegmentsListWidget> {
 
   _SegmentsListWidgetState({
     required String domain,
-    required SegmentSelectedCallback? onSegmentSelected
+    required SegmentSelectedCallback? onSegmentSelected,
+    required SegmentDeletedCallback? onSegmentDeleted
   })
     : _domain = domain
-    , _onSegmentSelected = onSegmentSelected {
+    , _onSegmentSelected = onSegmentSelected
+    , _onSegmentDeleted = onSegmentDeleted {
     reload();
   }
 
@@ -116,6 +123,10 @@ class _SegmentsListWidgetState extends State<SegmentsListWidget> {
     List<Widget> segments = [];
 
     for (final segmentInfo in _loadedSegments) {
+      if (segmentInfo.id == null) {
+        continue;
+      }
+
       segments.add(const SizedBox(height: 12));
       segments.add(
         Padding(
@@ -133,26 +144,40 @@ class _SegmentsListWidgetState extends State<SegmentsListWidget> {
                   _onSegmentSelected(segmentInfo);
                 }
               },
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              child: Row(
                 children: [
-                  Text(
-                    segmentInfo.title,
-                    textAlign: TextAlign.start,
-                    style: const TextStyle(
-                      color: AppTheme.textColorBody,
-                      fontSize: 16
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          segmentInfo.title,
+                          textAlign: TextAlign.start,
+                          style: const TextStyle(
+                            color: AppTheme.textColorBody,
+                            fontSize: 16
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          segmentInfo.description,
+                          textAlign: TextAlign.start,
+                          style: const TextStyle(
+                            color: AppTheme.textColorBody,
+                            fontSize: 12
+                          ),
+                        )
+                      ],
+                    )
+                  ),
+                  CupertinoButton(
+                    onPressed: () {
+                      _handleDeleteSegment(segmentInfo);
+                    },
+                    child: const Center(
+                      child: Icon(CupertinoIcons.delete, color: AppTheme.textColorBody,)
                     ),
                   ),
-                  const SizedBox(height: 8),
-                  Text(
-                    segmentInfo.description,
-                    textAlign: TextAlign.start,
-                    style: const TextStyle(
-                      color: AppTheme.textColorBody,
-                      fontSize: 12
-                    ),
-                  )
                 ],
               )
             ),
@@ -169,10 +194,47 @@ class _SegmentsListWidgetState extends State<SegmentsListWidget> {
     );
   }
 
+  void _handleDeleteSegment(SegmentInfo segmentInfo) {
+    showCupertinoDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return CupertinoAlertDialog(
+          title: const Text('Are you sure you want to remove selected segment'),
+          actions: [
+            CupertinoDialogAction(
+              onPressed: () {
+                Navigator.of(context).pop(false);
+              },
+              child: const Text('Cancel'),
+            ),
+            CupertinoDialogAction(
+              onPressed: () {
+                Navigator.of(context).pop(true);
+              },
+              isDestructiveAction: true,
+              child: const Text('Remove'),
+            ),
+          ],
+        );
+      }
+    ).then((value) {
+      if (value != null && value && segmentInfo.id != null) {
+        FirestoreClient.deleteSegment(domain: _domain, segmentId: segmentInfo.id!);
+
+        reload();
+
+        if (_onSegmentDeleted != null) {
+          _onSegmentDeleted(segmentInfo);
+        }
+      }
+    });
+  }
+
   // Internal fields
 
   final String _domain;
   final SegmentSelectedCallback? _onSegmentSelected;
+  final SegmentDeletedCallback? _onSegmentDeleted;
   
   bool _isLoading = false;
   List<SegmentInfo> _loadedSegments = [];
