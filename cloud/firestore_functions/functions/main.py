@@ -5,6 +5,7 @@ from firebase_admin import initialize_app, firestore
 import google.cloud.firestore
 import time
 
+
 MORALIS_API_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJub25jZSI6IjI2OWIwMzI1LWViMjctNDA5Ni1iY2VjLTYxMGQ4YmJmYjRiYyIsIm9yZ0lkIjoiMzgyNDQyIiwidXNlcklkIjoiMzkyOTY0IiwidHlwZUlkIjoiMDU5MWQ5NzItZGU3OC00ZjNjLTllMTYtNzU4OGQ1NTJjMjg2IiwidHlwZSI6IlBST0pFQ1QiLCJpYXQiOjE3MTAyNDkzNjcsImV4cCI6NDg2NjAwOTM2N30.u0OgFrKWer9nuFq2cimZZfv4CNgeqeYlZxCEpWDHrSM"
 
 
@@ -161,6 +162,26 @@ def update_wallets(request: https_fn.Request) -> https_fn.Response:
                         .document(wallet) \
                         .set({"updated_at": current_timestamp}, merge=True)
                     break
+
+            params = {
+                "exclude_spam": True,
+                "exclude_unverified_contracts": True,
+                "address": wallet
+            }
+
+            wallet_net_worth_in_usd_response = evm_api.wallets.get_wallet_net_worth(
+                api_key=MORALIS_API_KEY,
+                params=params,
+            )
+
+            firestore_client \
+                .collection("wallets") \
+                .document(wallet) \
+                .collection("balance_history") \
+                .document(str(current_timestamp)) \
+                .set(wallet_net_worth_in_usd_response, merge=True)
+
+            response += f"\n\n\nNet-worth fetch result for wallet [{wallet}]: \n" + str(wallet_net_worth_in_usd_response)
 
         response += "\n\n\nWallets updated"
     except Exception as e:
