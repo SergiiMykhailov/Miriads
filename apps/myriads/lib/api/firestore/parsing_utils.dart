@@ -9,7 +9,7 @@ ReturnValueType? tryGetValueFromMap<ReturnValueType>(Map<dynamic, dynamic> map, 
   return result;
 }
 
-double? tryGetDecimalFromMap(Map<dynamic, dynamic> map, Object key) {
+double? tryGetNumericFromMap(Map<dynamic, dynamic> map, Object key) {
   final value = map[key];
   if (value is double) {
     return value;
@@ -18,7 +18,9 @@ double? tryGetDecimalFromMap(Map<dynamic, dynamic> map, Object key) {
     return value.toDouble();
   }
 
-  return null;
+  final parsedDouble = double.tryParse(value);
+
+  return parsedDouble;
 }
 
 ReturnValueType getValueFromMapOrFallbackToValue<ReturnValueType>(
