@@ -5,6 +5,7 @@ import 'package:myriads/models/segment_info.dart';
 import 'package:myriads/models/user_info.dart';
 import 'package:myriads/api/firestore/parsing_utils.dart';
 import 'package:myriads/models/visitor_info.dart';
+import 'package:myriads/models/wallet_info.dart';
 import 'package:myriads/utils/string_extensions.dart';
 
 import 'firestore_keys.dart';
@@ -157,6 +158,68 @@ class FirestoreClient {
       .delete();
   }
 
+  static Future<List<WalletBalanceInfo>> loadWalletsNetWorthInUsd({
+    required List<String> walletsAddresses
+  }) async {
+    List<WalletBalanceInfo> result = [];
+
+    final firestore = await FirestoreUtils.initializedSharedInstance();
+
+    for (final wallet in walletsAddresses) {
+      final balanceHistorySnapshot = await firestore
+        .collection(FirestoreKeys.wallets)
+        .doc(wallet)
+        .collection(FirestoreKeys.balanceHistory)
+        .get();
+
+      double? walletNetWorthInUsd;
+      final lastBalanceHistoryRecord = balanceHistorySnapshot.docs.lastOrNull;
+      if (lastBalanceHistoryRecord != null) {
+        final balanceHistoryRecordData = lastBalanceHistoryRecord.data();
+
+        walletNetWorthInUsd = tryGetNumericFromMap(balanceHistoryRecordData, FirestoreKeys.totalNetWorthInUsd);
+      }
+
+      result.add(WalletBalanceInfo(address: wallet, totalNetWorthInUSD: walletNetWorthInUsd));
+    }
+
+    return result;
+  }
+
+  static Future<List<WalletTransactionsInfo>> loadWalletsTransactions({
+    required List<String> walletsAddresses
+  }) async {
+    List<WalletTransactionsInfo> result = [];
+
+    final firestore = await FirestoreUtils.initializedSharedInstance();
+
+    for (final wallet in walletsAddresses) {
+      final transactionsSnapshot = await firestore
+        .collection(FirestoreKeys.wallets)
+        .doc(wallet)
+        .collection(FirestoreKeys.transactions)
+        .get();
+
+      List<TransactionInfo> transactions = [];
+      for (final transactionDocument in transactionsSnapshot.docs) {
+        final transactionData = transactionDocument.data();
+        final transactionInfo = _transactionInfoFromDocumentData(transactionData);
+
+        if (transactionInfo != null) {
+          transactions.add(transactionInfo);
+        }
+      }
+
+      result.add(WalletTransactionsInfo(address: wallet, transactions: transactions));
+    }
+
+    return result;
+  }
+
+  static double weiToEth(double wei) {
+    return wei / 10e18;
+  }
+
   // Internal methods
 
   static String _adjustDomain(String domain) {
@@ -253,5 +316,31 @@ class FirestoreClient {
     }
 
     return null;
+  }
+
+  static TransactionInfo? _transactionInfoFromDocumentData(Map<String, dynamic> transactionDocumentData) {
+    final hash = tryGetValueFromMap<String>(transactionDocumentData, FirestoreKeys.hash);
+
+    int? timestamp;
+    final timestampValue = tryGetValueFromMap<String>(transactionDocumentData, FirestoreKeys.blockTimestamp);
+    if (timestampValue != null) {
+      timestamp = DateTime.tryParse(timestampValue)?.millisecondsSinceEpoch;
+    }
+
+    double? value;
+    final transactionValue = tryGetNumericFromMap(transactionDocumentData, FirestoreKeys.value);
+    if (transactionValue != null) {
+      value = _weiToEth(transactionValue);
+    }
+
+    if (hash != null && timestamp != null && value != null) {
+      return TransactionInfo(id: hash, timestamp: timestamp, amount: value);
+    }
+
+    return null;
+  }
+
+  static double _weiToEth(double wei) {
+    return wei / 10e18;
   }
 }

@@ -1,5 +1,4 @@
 import 'package:myriads/api/firestore/firestore_client.dart';
-import 'package:myriads/api/moralis/moralis_client.dart';
 import 'package:myriads/models/segment_info.dart';
 import 'package:myriads/models/visitor_info.dart';
 import 'package:myriads/models/wallet_info.dart';
@@ -174,8 +173,8 @@ class _SegmentDetailsWidgetState extends State<SegmentDetailsWidget> {
     // so we load all balances and transactions per single batch.
     // After this we need to match balances and transactions back to visitors.
     final allVisitorsWallets = _extractAllWalletsFromVisitors(domainVisitors);
-    final allVisitorsWalletsBalances = await MoralisClient.loadWalletsNetWorthInUsd(walletsAddresses: allVisitorsWallets.toList());
-    final allVisitorsWalletsTransactions = await MoralisClient.loadEthereumERC20WalletsTransactions(walletsAddresses: allVisitorsWallets.toList());
+    final allVisitorsWalletsBalances = await FirestoreClient.loadWalletsNetWorthInUsd(walletsAddresses: allVisitorsWallets.toList());
+    final allVisitorsWalletsTransactions = await FirestoreClient.loadWalletsTransactions(walletsAddresses: allVisitorsWallets.toList());
 
     DateTime now = DateTime.now();
     DateTime startOfDay = DateTime(now.year, now.month, now.day);
@@ -303,10 +302,11 @@ class _SegmentDetailsWidgetState extends State<SegmentDetailsWidget> {
     WalletTransactionsInfo? visitorTransactionsInfo,
     int startOfCurrentDayTimestamp
   ) {
-    // Transactions come in last-to-first order so the last one is the oldest one
-    final firstTransaction = visitorTransactionsInfo != null && visitorTransactionsInfo.transactions.isNotEmpty
-      ? visitorTransactionsInfo.transactions.last
-      : null;
+    TransactionInfo? firstTransaction;
+    if (visitorTransactionsInfo != null && visitorTransactionsInfo.transactions.isNotEmpty) {
+      firstTransaction = visitorTransactionsInfo.transactions
+        .reduce((current, next) => current.timestamp < next.timestamp ? current : next);
+    }
 
     if (segment.minWalletAgeInDays != null && segment.minWalletAgeInDays! > 0) {
       if (firstTransaction == null) {

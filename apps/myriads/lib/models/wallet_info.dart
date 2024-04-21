@@ -16,10 +16,12 @@ class TransactionInfo {
 
   // Public methods and properties
 
+  final String id;
   final int timestamp;
   final double amount;
 
   TransactionInfo({
+    required this.id,
     required this.timestamp,
     required this.amount
   });

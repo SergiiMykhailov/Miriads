@@ -58,8 +58,17 @@ class MoralisClient {
 
           final transactionAmountInWei = double.parse(transactionAmountString);
           final transactionAmountInEth = weiToEth(transactionAmountInWei);
+          final transactionId = moralisTransaction.hash;
 
-          transactions.add(TransactionInfo(timestamp: blockTimestamp, amount: transactionAmountInEth));
+          if (transactionId != null) {
+            transactions.add(
+              TransactionInfo(
+                id: transactionId,
+                timestamp: blockTimestamp,
+                amount: transactionAmountInEth
+              )
+            );
+          }
         }
         catch (exception) {
           continue;
